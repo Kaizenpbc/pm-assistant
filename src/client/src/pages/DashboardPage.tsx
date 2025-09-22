@@ -44,10 +44,6 @@ export const DashboardPage: React.FC = () => {
   };
 
   // AI Action Button Handlers
-  const handlePMApplication = () => {
-    window.open('http://localhost:3001', '_blank');
-  };
-
   const handlePortfolioAnalysis = () => {
     setAIAssistant({ isOpen: true, type: 'analysis' });
   };
@@ -163,85 +159,78 @@ export const DashboardPage: React.FC = () => {
                   <span className="text-white text-lg">📊</span>
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Project Manager Dashboard
+                  🚀 PROJECT MANAGER DASHBOARD - CHANGED! 🚀
                 </h1>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
               <button
-                onClick={handlePMApplication}
-                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                🚀 PM Application
-              </button>
-              <button
                 onClick={handlePortfolioAnalysis}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
                 🔍 Portfolio Analysis
               </button>
               <button
                 onClick={handleAdvancedAnalytics}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <Brain className="h-4 w-4 mr-2" />
                 📊 Advanced Analytics
               </button>
               <button
                 onClick={handleProjectHealth}
-                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <Target className="h-4 w-4 mr-2" />
                 🏥 Project Health
               </button>
               <button
                 onClick={handleResourceAllocation}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <Users className="h-4 w-4 mr-2" />
                 👥 Resource Allocation
               </button>
               <button
                 onClick={handleRiskTrends}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <TrendingUp className="h-4 w-4 mr-2" />
                 📈 Risk Trends
               </button>
               <button
                 onClick={handleDeadlines}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <Clock className="h-4 w-4 mr-2" />
                 ⏰ Deadlines
               </button>
               <button
                 onClick={handleEscalations}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 🚨 Escalations
               </button>
               <button
                 onClick={handleApprovals}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 ✅ Approvals
               </button>
               <button
                 onClick={handleSmartAlerts}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <Bell className="h-4 w-4 mr-2" />
                 🔔 Smart Alerts
               </button>
               <button
                 onClick={handleAITasks}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
               >
                 <User className="h-4 w-4 mr-2" />
                 🤖 AI Tasks

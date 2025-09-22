@@ -1,0 +1,25 @@
+{
+  "watch": [
+    "src/server",
+    ".env"
+  ],
+  "ext": "ts,js,json",
+  "ignore": [
+    "src/client",
+    "node_modules",
+    "dist",
+    "*.test.ts",
+    "*.spec.ts"
+  ],
+  "exec": "tsx src/server/index.ts",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": 1000,
+  "verbose": true,
+  "restartable": "rs",
+  "events": {
+    "restart": "echo '🔄 Server restarted due to file changes'",
+    "crash": "echo '💥 Server crashed, restarting...'"
+  }
+}

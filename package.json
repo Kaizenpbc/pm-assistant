@@ -4,8 +4,9 @@
   "description": "Production-ready Project Management Application with modern architecture",
   "main": "dist/server/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
-    "server:dev": "nodemon --exec tsx src/server/index.ts",
+    "dev": "node dev.js",
+    "dev:simple": "concurrently --kill-others-on-fail --prefix-colors \"bgBlue.bold,bgGreen.bold\" --names \"SERVER,CLIENT\" \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "nodemon --config nodemon.json",
     "client:dev": "cd src/client && npm run dev",
     "build": "npm run build:server && npm run build:client",
     "build:server": "tsc --project tsconfig.json",
