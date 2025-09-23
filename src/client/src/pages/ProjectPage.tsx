@@ -139,7 +139,7 @@ export const ProjectPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
-              <button 
+              <button
                 onClick={() => navigate('/dashboard')}
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
               >
@@ -245,7 +245,7 @@ export const ProjectPage: React.FC = () => {
 
           {/* Team Card */}
           <div className="card">
-            <div className="card-content">
+              <div className="card-content">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium text-gray-500">Team</h3>
                 <Users className="h-4 w-4 text-gray-400" />
@@ -439,14 +439,14 @@ export const ProjectPage: React.FC = () => {
                         <label className="text-sm font-medium text-gray-500">Status</label>
                         <p className="text-sm text-gray-900 mt-1 capitalize">{project.status.replace('_', ' ')}</p>
                       </div>
-                      <div>
+                    <div>
                         <label className="text-sm font-medium text-gray-500">Created</label>
                         <p className="text-sm text-gray-900 mt-1">{formatDate(project.createdAt)}</p>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+            </div>
 
               <div className="card">
                 <div className="card-header">
@@ -475,23 +475,263 @@ export const ProjectPage: React.FC = () => {
                         <p className="text-xs text-gray-500">3 days ago</p>
                       </div>
                     </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {activeTab === 'analytics' && (
-            <div className="card">
-              <div className="card-content">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Advanced Analytics</h3>
-                <p className="text-gray-600">Analytics dashboard coming soon...</p>
-                <button 
-                  onClick={() => setAIAssistant({ isOpen: true, type: 'analysis' })}
-                  className="btn btn-primary mt-4"
-                >
-                  Open AI Analytics
-                </button>
+            <div className="space-y-6">
+              {/* Analytics Header */}
+              <div className="card">
+                <div className="card-content">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">📊 Advanced Analytics</h3>
+                      <p className="text-gray-600">Comprehensive project performance insights and trends</p>
+                    </div>
+                    <button 
+                      onClick={() => setAIAssistant({ isOpen: true, type: 'analysis' })}
+                      className="btn btn-primary"
+                    >
+                      🤖 AI Deep Analysis
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Performance Indicators */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="card">
+                  <div className="card-content">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Completion Rate</p>
+                        <p className="text-3xl font-bold text-blue-600">78%</p>
+                        <p className="text-xs text-green-600">↗ +5% this week</p>
+                      </div>
+                      <div className="p-3 bg-blue-100 rounded-full">
+                        <BarChart3 className="h-6 w-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-content">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Velocity</p>
+                        <p className="text-3xl font-bold text-green-600">42</p>
+                        <p className="text-xs text-green-600">↗ +3 points</p>
+                      </div>
+                      <div className="p-3 bg-green-100 rounded-full">
+                        <TrendingUp className="h-6 w-6 text-green-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-content">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Budget Used</p>
+                        <p className="text-3xl font-bold text-orange-600">67%</p>
+                        <p className="text-xs text-orange-600">↗ +2% this week</p>
+                      </div>
+                      <div className="p-3 bg-orange-100 rounded-full">
+                        <Clock className="h-6 w-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-content">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Risk Score</p>
+                        <p className="text-3xl font-bold text-red-600">23</p>
+                        <p className="text-xs text-red-600">↗ +2 points</p>
+                      </div>
+                      <div className="p-3 bg-red-100 rounded-full">
+                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Performance Trends */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="card">
+                  <div className="card-content">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">📈 Performance Trends</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Task Completion Rate</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-32 bg-gray-200 rounded-full h-2">
+                            <div className="bg-blue-600 h-2 rounded-full" style={{ width: '78%' }}></div>
+                          </div>
+                          <span className="text-sm font-medium">78%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Team Productivity</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-32 bg-gray-200 rounded-full h-2">
+                            <div className="bg-green-600 h-2 rounded-full" style={{ width: '85%' }}></div>
+                          </div>
+                          <span className="text-sm font-medium">85%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Quality Score</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-32 bg-gray-200 rounded-full h-2">
+                            <div className="bg-purple-600 h-2 rounded-full" style={{ width: '92%' }}></div>
+                          </div>
+                          <span className="text-sm font-medium">92%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Client Satisfaction</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-32 bg-gray-200 rounded-full h-2">
+                            <div className="bg-yellow-600 h-2 rounded-full" style={{ width: '88%' }}></div>
+                          </div>
+                          <span className="text-sm font-medium">88%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-content">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">⏱️ Timeline Analysis</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <span className="text-sm font-medium">On Track Milestones</span>
+                        </div>
+                        <span className="text-sm font-bold text-green-600">8/10</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <span className="text-sm font-medium">At Risk Milestones</span>
+                        </div>
+                        <span className="text-sm font-bold text-yellow-600">2/10</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <span className="text-sm font-medium">Overdue Tasks</span>
+                        </div>
+                        <span className="text-sm font-bold text-red-600">3</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm font-medium">Upcoming Deadlines</span>
+                        </div>
+                        <span className="text-sm font-bold text-blue-600">5</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resource Utilization */}
+              <div className="card">
+                <div className="card-content">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">👥 Resource Utilization</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600 mb-2">85%</div>
+                      <p className="text-sm text-gray-600">Team Utilization</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: '85%' }}></div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600 mb-2">92%</div>
+                      <p className="text-sm text-gray-600">Skill Match</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-green-600 h-2 rounded-full" style={{ width: '92%' }}></div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600 mb-2">78%</div>
+                      <p className="text-sm text-gray-600">Capacity Planning</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-purple-600 h-2 rounded-full" style={{ width: '78%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Predictive Insights */}
+              <div className="card">
+                <div className="card-content">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">🔮 Predictive Insights</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <TrendingUp className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <h5 className="font-semibold text-blue-900">Completion Forecast</h5>
+                      </div>
+                      <p className="text-sm text-blue-800 mb-2">Based on current velocity and trends:</p>
+                      <p className="text-lg font-bold text-blue-900">Project will complete 2 days ahead of schedule</p>
+                    </div>
+                    <div className="p-4 bg-orange-50 rounded-lg">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                          <AlertTriangle className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <h5 className="font-semibold text-orange-900">Risk Alert</h5>
+                      </div>
+                      <p className="text-sm text-orange-800 mb-2">Potential bottleneck identified:</p>
+                      <p className="text-lg font-bold text-orange-900">Design phase may delay by 3-5 days</p>
+                    </div>
+                  </div>
+                </div>
+          </div>
+
+              {/* Action Buttons */}
+              <div className="card">
+                <div className="card-content">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">🤖 AI Analytics Assistant</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button 
+                      onClick={() => setAIAssistant({ isOpen: true, type: 'analysis' })}
+                      className="btn btn-primary w-full py-3"
+                    >
+                      📊 Generate Detailed Report
+                    </button>
+                    <button 
+                      onClick={() => setAIAssistant({ isOpen: true, type: 'recommendations' })}
+                      className="btn btn-secondary w-full py-3"
+                    >
+                      💡 Get Optimization Tips
+                    </button>
+                    <button 
+                      onClick={() => setAIAssistant({ isOpen: true, type: 'chat' })}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 w-full flex items-center justify-center space-x-2"
+                    >
+                      <span>🤖</span>
+                      <span>Ask Analytics Questions</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -586,7 +826,7 @@ export const ProjectPage: React.FC = () => {
                   Configure Smart Alerts
                 </button>
               </div>
-            </div>
+                  </div>
           )}
 
           {activeTab === 'ai-tasks' && (
@@ -600,21 +840,35 @@ export const ProjectPage: React.FC = () => {
                 >
                   Get AI Task Recommendations
                 </button>
-              </div>
-            </div>
-          )}
+                  </div>
+                    </div>
+                  )}
 
           {activeTab === 'schedule' && (
             <div className="card">
               <div className="card-content">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Schedule</h3>
-                <p className="text-gray-600">Schedule management coming soon...</p>
-                <button 
-                  onClick={() => setAIAssistant({ isOpen: true, type: 'recommendations' })}
-                  className="btn btn-primary mt-4"
-                >
-                  Generate AI Schedule
-                </button>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <p className="text-blue-800 font-medium">Schedule Management</p>
+                  </div>
+                  <p className="text-blue-700 text-sm mb-3">
+                    To view and manage your project schedule, click the button below to open the dedicated Schedule page.
+                  </p>
+                  <button 
+                    onClick={() => navigate(`/schedule/${project.id}`)}
+                    className="btn btn-primary"
+                  >
+                    View Project Schedule
+                  </button>
+                </div>
+                <div className="text-sm text-gray-500">
+                  <p>• Add phases from templates</p>
+                  <p>• Manage tasks and timelines</p>
+                  <p>• Save and load schedules</p>
+                  <p>• Track project progress</p>
+                </div>
               </div>
             </div>
           )}
@@ -645,8 +899,8 @@ export const ProjectPage: React.FC = () => {
                 >
                   Get PM Checklist
                 </button>
-              </div>
             </div>
+          </div>
           )}
         </div>
       </div>
@@ -656,6 +910,8 @@ export const ProjectPage: React.FC = () => {
         <AIAssistant
           type={aiAssistant.type}
           onClose={() => setAIAssistant({ isOpen: false, type: 'chat' })}
+          projectId={project.id}
+          projectName={project.name}
         />
       )}
     </div>

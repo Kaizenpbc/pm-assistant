@@ -4,13 +4,14 @@ import { useAuthStore } from './stores/authStore';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectPage } from './pages/ProjectPage';
+import SchedulePage from './pages/SchedulePage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import MonitoringDashboard from './components/MonitoringDashboard';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 function App() {
-  const { isAuthenticated, isLoading, setLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, setLoading, logout } = useAuthStore();
 
   // Initialize auth state
   useEffect(() => {
@@ -50,12 +51,23 @@ function App() {
               } 
             />
             <Route 
+              path="/schedule/:projectId" 
+              element={
+                isAuthenticated ? <SchedulePage /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
               path="/monitoring" 
               element={
                 isAuthenticated ? <MonitoringDashboard /> : <Navigate to="/login" replace />
               } 
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route 
+              path="/" 
+              element={
+                isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+              } 
+            />
           </Routes>
           
           {/* PWA Install Prompt */}

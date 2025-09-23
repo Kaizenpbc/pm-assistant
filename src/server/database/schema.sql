@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS projects (
     code VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
+    category VARCHAR(100),
     status ENUM('planning', 'active', 'on_hold', 'completed', 'cancelled') DEFAULT 'planning',
     priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
     budget_allocated DECIMAL(15, 2),
@@ -48,6 +49,7 @@ CREATE TABLE IF NOT EXISTS projects (
     
     INDEX idx_status (status),
     INDEX idx_priority (priority),
+    INDEX idx_category (category),
     INDEX idx_manager (project_manager_id),
     INDEX idx_created_by (created_by),
     INDEX idx_dates (start_date, end_date)

@@ -6,6 +6,7 @@ import { authMiddleware } from '../middleware/auth';
 const createProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
   description: z.string().optional(),
+  category: z.string().optional(),
   status: z.enum(['planning', 'active', 'on_hold', 'completed', 'cancelled']).default('planning'),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
   budgetAllocated: z.number().positive().optional(),

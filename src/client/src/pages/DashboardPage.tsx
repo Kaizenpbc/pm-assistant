@@ -5,6 +5,7 @@ import { apiService } from '../services/api';
 import { ProjectCard } from '../components/ProjectCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { AIAssistant } from '../components/AIAssistant';
+import ProjectCreationModal from '../components/ProjectCreationModal';
 import { 
   ExternalLink,
   BarChart3,
@@ -18,7 +19,8 @@ import {
   Bell,
   User,
   Lightbulb,
-  Loader2
+  Loader2,
+  Plus
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -27,6 +29,8 @@ export const DashboardPage: React.FC = () => {
     isOpen: boolean;
     type: 'analysis' | 'recommendations' | 'chat';
   }>({ isOpen: false, type: 'chat' });
+  
+  const [showCreateProject, setShowCreateProject] = useState(false);
 
   const { data: projectsData, isLoading, error } = useQuery({
     queryKey: ['projects'],
@@ -94,6 +98,12 @@ export const DashboardPage: React.FC = () => {
   const handleViewRAID = (project: any) => {
     console.log('View RAID for project:', project);
     setAIAssistant({ isOpen: true, type: 'analysis' });
+  };
+
+  const handleViewSchedule = (project: any) => {
+    console.log('View Schedule for project:', project);
+    // Navigate to schedule view page
+    window.location.href = `/schedule/${project.id}`;
   };
 
   const handleGetAISuggestions = (project: any) => {
@@ -165,6 +175,13 @@ export const DashboardPage: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowCreateProject(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Project
+              </button>
               <button
                 onClick={handlePortfolioAnalysis}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
@@ -352,6 +369,7 @@ export const DashboardPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decision Tracking</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action Priority</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Project</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Schedule</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link to Issues</th>
                   </tr>
                 </thead>
@@ -502,6 +520,18 @@ export const DashboardPage: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <button 
+                              className="text-blue-600 hover:text-blue-800 hover:underline border border-blue-300 px-3 py-1 rounded-md flex items-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewSchedule(project);
+                              }}
+                            >
+                              <Clock className="h-4 w-4 mr-1" />
+                              View Schedule
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <button 
                               className="text-green-600 hover:text-green-800 hover:underline"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -544,6 +574,17 @@ export const DashboardPage: React.FC = () => {
           onClose={() => setAIAssistant({ isOpen: false, type: 'chat' })}
         />
       )}
+
+      {/* Project Creation Modal */}
+      <ProjectCreationModal
+        isOpen={showCreateProject}
+        onClose={() => setShowCreateProject(false)}
+        onCreateProject={(projectData) => {
+          console.log('Creating new project:', projectData);
+          // TODO: Implement project creation API call
+          setShowCreateProject(false);
+        }}
+      />
     </div>
   );
 };
