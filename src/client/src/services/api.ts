@@ -5,7 +5,7 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: 'http://localhost:3002/api/v1',
+      baseURL: 'http://localhost:3001/api/v1',
       withCredentials: true, // Important for HttpOnly cookies
       headers: {
         'Content-Type': 'application/json',
@@ -107,6 +107,89 @@ class ApiService {
 
   async deleteProject(id: string) {
     const response = await this.api.delete(`/projects/${id}`);
+    return response.data;
+  }
+
+  // Schedule endpoints
+  async getSchedules(projectId: string) {
+    const response = await this.api.get(`/schedules/project/${projectId}`);
+    return response.data;
+  }
+
+  async createSchedule(scheduleData: {
+    projectId: string;
+    name: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+  }) {
+    const response = await this.api.post('/schedules', scheduleData);
+    return response.data;
+  }
+
+  async updateSchedule(scheduleId: string, scheduleData: any) {
+    const response = await this.api.put(`/schedules/${scheduleId}`, scheduleData);
+    return response.data;
+  }
+
+  // Task endpoints
+  async getTasks(scheduleId: string) {
+    const response = await this.api.get(`/schedules/${scheduleId}/tasks`);
+    return response.data;
+  }
+
+  async createTask(scheduleId: string, taskData: {
+    name: string;
+    description?: string;
+    status?: string;
+    priority?: string;
+    assignedTo?: string;
+    dueDate?: string;
+    estimatedDays?: number;
+    workEffort?: string;
+    dependency?: string;
+    risks?: string;
+    issues?: string;
+    comments?: string;
+  }) {
+    const response = await this.api.post(`/schedules/${scheduleId}/tasks`, taskData);
+    return response.data;
+  }
+
+  async updateTask(scheduleId: string, taskId: string, taskData: any) {
+    const response = await this.api.put(`/schedules/${scheduleId}/tasks/${taskId}`, taskData);
+    return response.data;
+  }
+
+  // AI Scheduling endpoints
+  async analyzeProject(projectData: {
+    projectDescription: string;
+    projectType?: string;
+    existingTasks?: any[];
+  }) {
+    const response = await this.api.post('/ai-scheduling/analyze-project', projectData);
+    return response.data;
+  }
+
+  async suggestDependencies(taskData: {
+    tasks: any[];
+    projectContext?: string;
+  }) {
+    const response = await this.api.post('/ai-scheduling/suggest-dependencies', taskData);
+    return response.data;
+  }
+
+  async optimizeSchedule(optimizationData: {
+    scheduleId: string;
+    optimizationGoals?: string[];
+    constraints?: any;
+  }) {
+    const response = await this.api.post('/ai-scheduling/optimize-schedule', optimizationData);
+    return response.data;
+  }
+
+  async getProjectInsights(projectId: string) {
+    const response = await this.api.get(`/ai-scheduling/insights/${projectId}`);
     return response.data;
   }
 }

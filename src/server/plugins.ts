@@ -40,8 +40,30 @@ export async function registerPlugins(fastify: FastifyInstance) {
 
   // CORS
   await fastify.register(cors, {
-    origin: config.CORS_ORIGIN,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Allow localhost on any port for development
+      if (origin.startsWith('http://localhost:') || origin.startsWith('https://localhost:')) {
+        return callback(null, true);
+      }
+      
+      // Allow the configured origin
+      if (origin === config.CORS_ORIGIN) {
+        return callback(null, true);
+      }
+      
+      // For development, allow all origins
+      if (config.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
   });
 
   // Rate limiting temporarily disabled for development

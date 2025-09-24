@@ -13,6 +13,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import ProjectPlanningTemplates from '../components/ProjectPlanningTemplates';
+import { AITaskBreakdown } from '../components/AITaskBreakdown';
+import { apiService } from '../services/api';
 
 interface Project {
   id: string;
@@ -26,34 +28,54 @@ interface Project {
 
 interface ScheduleTask {
   id: string;
+  schedule_id: string;
   name: string;
   description: string;
-  startDate: string;
-  endDate: string;
-  status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
-  priority: 'low' | 'medium' | 'high';
-  progress: number;
-  estimatedHours: number;
-  actualHours: number;
-  assignedTo?: string;
-  parentTaskId?: string;
-  dependencies?: string[];
-  estimatedDays?: number;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assigned_to?: string;
+  due_date?: string;
+  estimated_days?: number;
+  parent_task_id?: string;
+  work_effort?: string;
   dependency?: string;
-  workEffort?: string;
-  assignedResource?: string;
   risks?: string;
   issues?: string;
   comments?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  // AI-generated fields
+  complexity?: 'low' | 'medium' | 'high';
+  riskLevel?: number;
+  category?: string;
+  skills?: string[];
+  deliverables?: string[];
+  dependencies?: string[];
+  // Legacy fields for compatibility
+  startDate?: string;
+  endDate?: string;
+  progress?: number;
+  estimatedHours?: number;
+  actualHours?: number;
+  assignedResource?: string;
   actualStartDate?: string;
   projectedFinishDate?: string;
 }
 
 interface ProjectSchedule {
   id: string;
+  project_id: string;
   name: string;
   description: string;
-  projectId: string;
+  start_date: string;
+  end_date: string;
+  status: 'planned' | 'in_progress' | 'completed' | 'cancelled';
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  // Legacy fields for compatibility
+  projectId?: string;
   templateId?: string;
   templateName?: string;
 }
@@ -68,12 +90,17 @@ const SchedulePage: React.FC = () => {
   const [taskHierarchy, setTaskHierarchy] = useState<Record<string, ScheduleTask[]>>({});
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [editableDates, setEditableDates] = useState<Record<string, { start?: string; finish?: string }>>({});
+  const [editableDurations, setEditableDurations] = useState<Record<string, string>>({});
+  const [editableWorkEfforts, setEditableWorkEfforts] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showErrorMessage, setShowErrorMessage] = useState(false);
   const [messageText, setMessageText] = useState('');
+  const [showAIBreakdown, setShowAIBreakdown] = useState(false);
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Mock project data - updated to use the correct project based on ID
   const mockProjects: Record<string, Project> = {
@@ -107,19 +134,11 @@ const SchedulePage: React.FC = () => {
   };
 
 
-  // Mock schedule data
-  const mockSchedule: ProjectSchedule = {
-    id: 'schedule-001',
-    name: 'Current Project Schedule',
-    description: 'Active project schedule',
-    projectId: projectId || '2',
-    templateId: 'building-construction',
-    templateName: 'Building Construction'
-  };
+  // Mock schedule data - removed, will be loaded from database
 
   // Mock tasks data - Road Construction template
-  const roadConstructionTasks: ScheduleTask[] = [
-    {
+  // const roadConstructionTasks: ScheduleTask[] = [
+  /*  {
       id: 'phase-initiation',
       name: 'Project Initiation',
       description: 'Initial project setup and stakeholder alignment',
@@ -130,9 +149,9 @@ const SchedulePage: React.FC = () => {
       progress: 100,
       estimatedHours: 40,
       actualHours: 40,
-      estimatedDays: 5,
+      estimated_days: 5,
       dependency: '',
-      workEffort: '8 hours/day',
+      work_effort: '8 hours/day',
       assignedResource: 'Project Manager',
       risks: 'Low',
       issues: 'None',
@@ -144,14 +163,14 @@ const SchedulePage: React.FC = () => {
       description: 'Comprehensive site assessment and condition analysis',
       startDate: '2024-01-21',
       endDate: '2024-02-05',
-      status: 'in-progress',
+      status: 'in_progress',
       priority: 'high',
       progress: 60,
       estimatedHours: 120,
       actualHours: 72,
-      estimatedDays: 15,
+      estimated_days: 15,
       dependency: 'Project Initiation',
-      workEffort: '8 hours/day',
+      work_effort: '8 hours/day',
       assignedResource: 'Survey Team',
       risks: 'Medium - Weather dependent',
       issues: 'Equipment delay',
@@ -163,14 +182,14 @@ const SchedulePage: React.FC = () => {
       description: 'Create detailed project design and specifications',
       startDate: '2024-02-06',
       endDate: '2024-02-25',
-      status: 'not-started',
+      status: 'pending',
       priority: 'high',
       progress: 0,
       estimatedHours: 160,
       actualHours: 0,
-      estimatedDays: 20,
+      estimated_days: 20,
       dependency: 'Site Analysis & Survey',
-      workEffort: '8 hours/day',
+      work_effort: '8 hours/day',
       assignedResource: 'Engineering Team',
       risks: 'Low',
       issues: 'None',
@@ -182,24 +201,25 @@ const SchedulePage: React.FC = () => {
       description: 'Physical construction and implementation',
       startDate: '2024-02-26',
       endDate: '2024-04-15',
-      status: 'not-started',
+      status: 'pending',
       priority: 'high',
       progress: 0,
       estimatedHours: 400,
       actualHours: 0,
-      estimatedDays: 50,
+      estimated_days: 50,
       dependency: 'Design & Planning',
-      workEffort: '8 hours/day',
+      work_effort: '8 hours/day',
       assignedResource: 'Construction Team',
       risks: 'High - Weather and material delays',
       issues: 'None',
       comments: 'Major construction phase'
     }
-  ];
+  */
+  // ];
 
   // Mock subtasks for phases
-  const mockSubtasks: Record<string, ScheduleTask[]> = {
-    'phase-initiation': [
+  // const mockSubtasks: Record<string, ScheduleTask[]> = {
+  /*  'phase-initiation': [
       {
         id: 'task-1',
         name: 'Project kickoff meeting',
@@ -268,7 +288,7 @@ const SchedulePage: React.FC = () => {
         description: 'Analyze traffic patterns and impact',
         startDate: '2024-01-26',
         endDate: '2024-01-30',
-        status: 'in-progress',
+        status: 'in_progress',
         priority: 'high',
         progress: 60,
         estimatedHours: 12,
@@ -283,29 +303,116 @@ const SchedulePage: React.FC = () => {
         comments: 'In progress'
       }
     ]
-  };
+  */
+  // };
 
   useEffect(() => {
     // Load project data
     const currentProject = mockProjects[projectId || '2'];
     setProject(currentProject);
-    setCurrentSchedule(mockSchedule);
     
-    // Try to load saved schedule first
-    const savedSchedules = JSON.parse(localStorage.getItem('savedSchedules') || '{}');
-    const savedScheduleKey = `${currentProject.id}-${mockSchedule.id}`;
-    const savedSchedule = savedSchedules[savedScheduleKey];
-    
-    if (savedSchedule) {
-      console.log('Loading saved schedule:', savedSchedule);
-      setScheduleTasks(savedSchedule.phases);
-      setTaskHierarchy(savedSchedule.taskHierarchy);
+    // Load schedule data from database
+    const loadScheduleData = async () => {
+      if (!currentProject?.id) return;
+      
+      setIsLoadingSchedule(true);
+      setLoadError(null);
+      
+      try {
+        console.log('=== LOADING SCHEDULE FROM DATABASE ===');
+        console.log('Current project:', currentProject);
+        console.log('Project ID:', currentProject.id);
+        
+        const schedulesResponse = await apiService.getSchedules(currentProject.id);
+        console.log('Schedules response:', schedulesResponse);
+        
+        if (schedulesResponse.schedules && schedulesResponse.schedules.length > 0) {
+          // Find the schedule with the most tasks, or use the first one
+          let scheduleToUse = schedulesResponse.schedules[0];
+          let maxTasks = 0;
+          
+          // Check each schedule to find the one with most tasks
+          for (const schedule of schedulesResponse.schedules) {
+            try {
+              const tasksResponse = await apiService.getTasks(schedule.id);
+              const taskCount = tasksResponse.tasks ? tasksResponse.tasks.length : 0;
+              
+              if (taskCount > maxTasks) {
+                maxTasks = taskCount;
+                scheduleToUse = schedule;
+              }
+            } catch (error) {
+              console.warn(`Could not load tasks for schedule ${schedule.id}:`, error);
+            }
+          }
+          
+          console.log(`Selected schedule ${scheduleToUse.id} with ${maxTasks} tasks`);
+          setCurrentSchedule(scheduleToUse);
+          
+          // Load tasks for this schedule
+          const tasksResponse = await apiService.getTasks(scheduleToUse.id);
+          console.log('Tasks response:', tasksResponse);
+          
+          if (tasksResponse.tasks && tasksResponse.tasks.length > 0) {
+            setScheduleTasks(tasksResponse.tasks);
+            
+            // Build task hierarchy
+            const hierarchy: Record<string, ScheduleTask[]> = {};
+            tasksResponse.tasks.forEach((task: ScheduleTask) => {
+              if (task.parent_task_id) {
+                if (!hierarchy[task.parent_task_id]) {
+                  hierarchy[task.parent_task_id] = [];
+                }
+                hierarchy[task.parent_task_id].push(task);
+              }
+            });
+            setTaskHierarchy(hierarchy);
     } else {
-      console.log('No saved schedule found, starting with empty schedule');
       setScheduleTasks([]);
       setTaskHierarchy({});
     }
+          
+          console.log('Loaded schedule from database:', scheduleToUse.name);
+        } else {
+          console.log('No schedules found, showing blank schedule');
+          setCurrentSchedule(null);
+          setScheduleTasks([]);
+          setTaskHierarchy({});
+        }
+      } catch (error) {
+        console.error('Error loading schedule data:', error);
+        setLoadError('Failed to load schedule data. Please try again.');
+        // Fallback to blank schedule on error
+        setCurrentSchedule(null);
+        setScheduleTasks([]);
+        setTaskHierarchy({});
+      } finally {
+        setIsLoadingSchedule(false);
+      }
+    };
+    
+    loadScheduleData();
   }, [projectId]);
+
+  // Initialize editable states with current task data
+  useEffect(() => {
+    if (scheduleTasks.length > 0) {
+      const initialDates: Record<string, { start?: string; finish?: string }> = {};
+      const initialDurations: Record<string, string> = {};
+      const initialWorkEfforts: Record<string, string> = {};
+      
+      scheduleTasks.forEach(task => {
+        if (task.startDate) initialDates[task.id] = { start: task.startDate };
+        if (task.endDate) initialDates[task.id] = { ...initialDates[task.id], finish: task.endDate };
+        if (task.estimated_days) initialDurations[task.id] = task.estimated_days.toString();
+        if (task.work_effort) initialWorkEfforts[task.id] = task.work_effort;
+      });
+      
+      setEditableDates(initialDates);
+      setEditableDurations(initialDurations);
+      setEditableWorkEfforts(initialWorkEfforts);
+    }
+  }, [scheduleTasks]);
 
   const handleTaskToggle = (taskId: string) => {
     setExpandedTasks(prev => ({
@@ -328,66 +435,418 @@ const SchedulePage: React.FC = () => {
       }
     }));
     setHasUnsavedChanges(true);
+    
+    // Auto-calculate finish date when start date changes
+    if (type === 'start') {
+      autoCalculateFinishDate(taskId);
+    }
+    
+    // Auto-calculate duration when finish date changes
+    if (type === 'finish') {
+      autoCalculateDuration(taskId);
+    }
+  };
+
+  const handleDurationChange = (taskId: string, value: string) => {
+    console.log('Duration changed for task:', taskId, 'to:', value);
+    setEditableDurations(prev => ({
+      ...prev,
+      [taskId]: value
+    }));
+    setHasUnsavedChanges(true);
+    // Auto-calculate finish date when duration changes
+    autoCalculateFinishDate(taskId);
+  };
+
+  const handleWorkEffortChange = (taskId: string, value: string) => {
+    setEditableWorkEfforts(prev => ({
+      ...prev,
+      [taskId]: value
+    }));
+    setHasUnsavedChanges(true);
+    // Auto-calculate finish date when work effort changes
+    autoCalculateFinishDate(taskId);
+  };
+
+  // Helper function to auto-calculate finish date based on start date and duration
+  const autoCalculateFinishDate = (taskId: string) => {
+    const startDate = editableDates[taskId]?.start;
+    const duration = editableDurations[taskId];
+    
+    console.log('Auto-calculating finish date for task:', taskId, 'startDate:', startDate, 'duration:', duration);
+    
+    // If no start date in editable state, try to get it from task data
+    let actualStartDate = startDate;
+    if (!actualStartDate) {
+      const task = scheduleTasks.find(t => t.id === taskId);
+      if (task && task.startDate) {
+        actualStartDate = task.startDate;
+      } else {
+        // Use today's date as default
+        actualStartDate = new Date().toISOString().split('T')[0];
+      }
+    }
+    
+    console.log('Actual start date:', actualStartDate);
+    
+    if (actualStartDate && duration) {
+      const start = new Date(actualStartDate);
+      const days = parseInt(duration) || 1;
+      
+      // Calculate finish date (subtract 1 day since start and end are both working days)
+      const finish = new Date(start);
+      finish.setDate(finish.getDate() + days - 1);
+      
+      const finishDateStr = finish.toISOString().split('T')[0];
+      console.log('Calculated finish date:', finishDateStr, 'from start:', actualStartDate, 'and duration:', days, 'days');
+      
+      // Update the finish date in editable state
+      setEditableDates(prev => ({
+        ...prev,
+        [taskId]: {
+          ...prev[taskId],
+          start: actualStartDate,
+          finish: finishDateStr
+        }
+      }));
+      
+      // Also update the actual task data
+      setScheduleTasks(prev => prev.map(task => 
+        task.id === taskId 
+          ? { ...task, 
+              estimatedDays: parseInt(duration) || 1,
+              startDate: actualStartDate,
+              endDate: finishDateStr
+            }
+          : task
+      ));
+      
+      // Update subtasks too if this is a parent task
+      setTaskHierarchy(prev => {
+        const newHierarchy = { ...prev };
+        if (newHierarchy[taskId]) {
+          newHierarchy[taskId] = newHierarchy[taskId].map(subtask => ({
+            ...subtask,
+            estimatedDays: parseInt(duration) || 1
+          }));
+        }
+        return newHierarchy;
+      });
+      
+      console.log('Successfully updated finish date to:', finishDateStr);
+      
+    } else {
+      console.log('Cannot calculate finish date - missing startDate or duration');
+    }
+  };
+
+  // Helper function to auto-calculate duration based on start and finish dates
+  const autoCalculateDuration = (taskId: string) => {
+    const startDate = editableDates[taskId]?.start;
+    const finishDate = editableDates[taskId]?.finish;
+    
+    if (startDate && finishDate) {
+      const start = new Date(startDate);
+      const finish = new Date(finishDate);
+      
+      // Calculate duration in days (add 1 day since both start and end are working days)
+      const diffTime = finish.getTime() - start.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      
+      // Update the duration in editable state
+      setEditableDurations(prev => ({
+        ...prev,
+        [taskId]: diffDays.toString()
+      }));
+      
+      // Also update the actual task data
+      setScheduleTasks(prev => prev.map(task => 
+        task.id === taskId 
+          ? { ...task, 
+              estimatedDays: diffDays,
+              startDate: startDate,
+              endDate: finishDate
+            }
+          : task
+      ));
+      
+      // Update subtasks too if this is a parent task
+      setTaskHierarchy(prev => {
+        const newHierarchy = { ...prev };
+        if (newHierarchy[taskId]) {
+          newHierarchy[taskId] = newHierarchy[taskId].map(subtask => ({
+            ...subtask,
+            estimatedDays: diffDays
+          }));
+        }
+        return newHierarchy;
+      });
+      
+    }
+  };
+
+  const handleAITasksGenerated = (aiTasks: any[], phases?: any[]) => {
+    console.log('=== AI TASKS GENERATED ===');
+    console.log('AI Tasks:', aiTasks);
+    console.log('Phases:', phases);
+
+    // Convert AI tasks to ScheduleTask format
+    const convertedTasks: ScheduleTask[] = aiTasks.map(task => ({
+      id: task.id,
+      schedule_id: currentSchedule?.id || 'default-schedule',
+      name: task.name,
+      description: task.description,
+      status: 'pending' as const,
+      priority: task.priority,
+      estimated_days: task.estimatedDays,
+      work_effort: task.estimatedDays?.toString() + ' days',
+      dependency: task.dependencies?.join(', '),
+      risks: task.riskLevel > 50 ? `High risk task (${task.riskLevel}%)` : undefined,
+      comments: `AI-generated task. Category: ${task.category}. Skills: ${task.skills?.join(', ')}`,
+      created_by: 'ai-system',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      // AI fields
+      complexity: task.complexity,
+      riskLevel: task.riskLevel,
+      category: task.category,
+      skills: task.skills,
+      deliverables: task.deliverables,
+      dependencies: task.dependencies
+    }));
+
+    // Create phase structure if phases are provided
+    if (phases && phases.length > 0) {
+      console.log('Creating phase structure...');
+      
+      // Create phase tasks and organize subtasks
+      const newTasks: ScheduleTask[] = [];
+      const newHierarchy: Record<string, ScheduleTask[]> = {};
+
+      phases.forEach(phase => {
+        // Create phase header task
+        const phaseTask: ScheduleTask = {
+          id: `phase-${phase.id}`,
+          schedule_id: currentSchedule?.id || 'default-schedule',
+          name: phase.name,
+          description: phase.description,
+          status: 'pending' as const,
+          priority: 'medium',
+          estimated_days: phase.estimatedDays,
+          work_effort: phase.estimatedDays?.toString() + ' days',
+          created_by: 'ai-system',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          // Mark as phase
+          category: 'Phase',
+          complexity: 'medium',
+          riskLevel: 20
+        };
+
+        newTasks.push(phaseTask);
+
+        // Get tasks for this phase
+        const phaseTaskIds = phase.tasks.map((t: any) => t.id);
+        const phaseSubtasks = convertedTasks.filter(task => phaseTaskIds.includes(task.id));
+        
+        // Add phase subtasks to hierarchy
+        newHierarchy[phaseTask.id] = phaseSubtasks;
+      });
+
+      console.log('Phase tasks created:', newTasks);
+      console.log('Phase hierarchy:', newHierarchy);
+
+      // Update state with phase structure
+      setScheduleTasks(prev => [...prev, ...newTasks]);
+      setTaskHierarchy(prev => ({ ...prev, ...newHierarchy }));
+    } else {
+      // Fallback to flat structure if no phases
+      console.log('No phases provided, using flat structure');
+      setScheduleTasks(prev => [...prev, ...convertedTasks]);
+    }
+
+    setHasUnsavedChanges(true);
+    setShowAIBreakdown(false);
+    
+    const phaseCount = phases ? phases.length : 0;
+    setMessageText(`AI generated ${convertedTasks.length} tasks in ${phaseCount} phases successfully!`);
+    setShowSuccessMessage(true);
+    setTimeout(() => setShowSuccessMessage(false), 4000);
   };
 
   const handleSaveSchedule = async () => {
-    if (!project || !currentSchedule) {
-      console.error('No project or schedule to save');
+    if (!project) {
+      console.error('No project to save');
       return;
     }
 
     setIsSaving(true);
     try {
-      // Prepare the schedule data to save
+      console.log('=== SAVING SCHEDULE TO DATABASE ===');
+      console.log('Current schedule state:', currentSchedule);
+      console.log('Schedule tasks count:', scheduleTasks.length);
+      
+      // Create a schedule if none exists
+      let scheduleId;
+      
+      if (!currentSchedule) {
+        // Check if there are any existing schedules for this project first
+        const existingSchedules = await apiService.getSchedules(project.id);
+        
+        if (existingSchedules.schedules && existingSchedules.schedules.length > 0) {
+          // Use the existing schedule with most tasks
+          let scheduleToUse = existingSchedules.schedules[0];
+          let maxTasks = 0;
+          
+          for (const schedule of existingSchedules.schedules) {
+            try {
+              const tasksResponse = await apiService.getTasks(schedule.id);
+              const taskCount = tasksResponse.tasks ? tasksResponse.tasks.length : 0;
+              
+              if (taskCount > maxTasks) {
+                maxTasks = taskCount;
+                scheduleToUse = schedule;
+              }
+            } catch (error) {
+              console.warn(`Could not load tasks for schedule ${schedule.id}:`, error);
+            }
+          }
+          
+          console.log(`Using existing schedule ${scheduleToUse.id} with ${maxTasks} tasks`);
+          setCurrentSchedule(scheduleToUse);
+          scheduleId = scheduleToUse.id;
+        } else {
+          // Create new schedule only if none exist
       const scheduleData = {
         projectId: project.id,
-        scheduleId: currentSchedule.id,
-        scheduleName: currentSchedule.name,
-        phases: scheduleTasks,
-        taskHierarchy: taskHierarchy,
-        lastModified: new Date().toISOString(),
-        totalTasks: scheduleTasks.length,
-        totalSubtasks: Object.values(taskHierarchy).flat().length,
-        isEmpty: scheduleTasks.length === 0 // Flag to indicate if schedule is empty
-      };
-
-      // Simulate API call (replace with actual API call later)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+            name: 'Project Schedule',
+            description: 'Auto-generated schedule',
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+          };
+          
+          const response = await apiService.createSchedule(scheduleData);
+          scheduleId = response.schedule.id;
+          
+          // Update current schedule with database ID
+          setCurrentSchedule(response.schedule);
+          console.log('Created new schedule:', response.schedule);
+        }
+      } else if (currentSchedule.id === 'default-schedule') {
+        // Create new schedule in database
+        const scheduleData = {
+          projectId: project.id,
+          name: currentSchedule.name,
+          description: currentSchedule.description,
+          startDate: currentSchedule.start_date,
+          endDate: currentSchedule.end_date,
+        };
+        
+        const response = await apiService.createSchedule(scheduleData);
+        scheduleId = response.schedule.id;
+        
+        // Update current schedule with database ID
+        setCurrentSchedule(response.schedule);
+        console.log('Created new schedule:', response.schedule);
+      } else {
+        // Update existing schedule
+        scheduleId = currentSchedule.id;
+        const updateData = {
+          name: currentSchedule.name,
+          description: currentSchedule.description,
+          startDate: currentSchedule.start_date,
+          endDate: currentSchedule.end_date,
+        };
+        
+        await apiService.updateSchedule(scheduleId, updateData);
+        console.log('Updated schedule:', scheduleId);
+      }
       
-      // Store in localStorage for now (replace with actual API call)
-      const savedSchedules = JSON.parse(localStorage.getItem('savedSchedules') || '{}');
-      savedSchedules[`${project.id}-${currentSchedule.id}`] = scheduleData;
-      localStorage.setItem('savedSchedules', JSON.stringify(savedSchedules));
+      // Save all tasks
+      for (const task of scheduleTasks) {
+        if (task.id.startsWith('task-') || task.id.startsWith('phase-')) {
+          // This is a new task, create it
+          // Format date properly for server (YYYY-MM-DD)
+          // const formatDateForServer = (dateStr: string | undefined) => {
+          //   if (!dateStr) return undefined;
+          //   const date = new Date(dateStr);
+          //   return date.toISOString().split('T')[0]; // Convert to YYYY-MM-DD format
+          // };
+
+          const taskData = {
+            name: task.name,
+            description: task.description || '',
+            status: task.status,
+            priority: task.priority,
+            assignedTo: (task.assigned_to || (task as any).assignedTo) === 'TBD' ? undefined : (task.assigned_to || (task as any).assignedTo),
+            dueDate: (task.due_date || task.endDate) || undefined,
+            estimatedDays: task.estimated_days ? Number(task.estimated_days) : undefined,
+            workEffort: task.work_effort,
+            dependency: task.dependency,
+            risks: task.risks,
+            issues: task.issues,
+            comments: task.comments,
+          };
+          
+          // Remove empty string values that cause validation errors
+          Object.keys(taskData).forEach(key => {
+            if ((taskData as any)[key] === '') {
+              (taskData as any)[key] = undefined;
+            }
+          });
+          
+          console.log('=== CREATING TASK ===');
+          console.log('Task name:', task.name);
+          console.log('Task data being sent:', JSON.stringify(taskData, null, 2));
+          
+          await apiService.createTask(scheduleId, taskData);
+          console.log('Created new task:', task.name);
+        } else {
+          // This is an existing task, update it
+          const updateData = {
+            name: task.name,
+            description: task.description || '',
+            status: task.status,
+            priority: task.priority,
+            assignedTo: (task.assigned_to || (task as any).assignedTo) === 'TBD' ? undefined : (task.assigned_to || (task as any).assignedTo),
+            dueDate: (task.due_date || task.endDate) || undefined,
+            estimatedDays: task.estimated_days ? Number(task.estimated_days) : undefined,
+            workEffort: task.work_effort,
+            dependency: task.dependency,
+            risks: task.risks,
+            issues: task.issues,
+            comments: task.comments,
+          };
+          
+          // Remove empty string values that cause validation errors
+          Object.keys(updateData).forEach(key => {
+            if ((updateData as any)[key] === '') {
+              (updateData as any)[key] = undefined;
+            }
+          });
+          
+          await apiService.updateTask(scheduleId, task.id, updateData);
+          console.log('Updated task:', task.name);
+        }
+      }
       
       setHasUnsavedChanges(false);
       
       // Show success message
-      if (scheduleTasks.length === 0) {
-        setMessageText('Empty schedule saved successfully!');
-      } else {
-        setMessageText(`Schedule saved successfully with ${scheduleTasks.length} phases and ${Object.values(taskHierarchy).flat().length} tasks!`);
-      }
+      setMessageText(`Schedule saved successfully with ${scheduleTasks.length} tasks!`);
       setShowSuccessMessage(true);
-      setShowErrorMessage(false); // Clear any error messages
-      console.log('Setting success message:', messageText);
-      setTimeout(() => {
-        console.log('Hiding success message');
-        setShowSuccessMessage(false);
-      }, 4000);
+      setShowErrorMessage(false);
+      setTimeout(() => setShowSuccessMessage(false), 4000);
       
-      console.log('Schedule saved successfully:', scheduleData);
+      console.log('Schedule saved successfully to database!');
     } catch (error) {
       console.error('Error saving schedule:', error);
       
       // Show error message
       setMessageText('Failed to save schedule. Please try again.');
       setShowErrorMessage(true);
-      setShowSuccessMessage(false); // Clear any success messages
-      console.log('Setting error message:', messageText);
-      setTimeout(() => {
-        console.log('Hiding error message');
-        setShowErrorMessage(false);
-      }, 4000);
+      setShowSuccessMessage(false);
+      setTimeout(() => setShowErrorMessage(false), 4000);
     } finally {
       setIsSaving(false);
     }
@@ -466,17 +925,17 @@ const SchedulePage: React.FC = () => {
       // Create main phase task
       const phaseTask: ScheduleTask = {
         id: `phase-${phaseId}`,
+        schedule_id: currentSchedule?.id || 'default-schedule',
         name: phase.name,
         description: phase.description,
-        status: 'not-started',
+        status: 'pending',
         priority: 'medium',
-        estimatedHours: phase.estimatedDays * 8, // Convert days to hours
-        actualHours: 0,
-        assignedTo: 'TBD',
-        startDate: '',
-        endDate: '',
-        dependencies: phase.dependencies || [],
-        progress: 0
+        estimated_days: phase.estimatedDays,
+        assigned_to: 'TBD',
+        due_date: new Date(Date.now() + phase.estimatedDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        created_by: 'admin-001',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
       
       newTasks.push(phaseTask);
@@ -487,17 +946,17 @@ const SchedulePage: React.FC = () => {
         phase.tasks.forEach((task: any) => {
           const subtask: ScheduleTask = {
             id: `task-${taskCounter++}`,
+            schedule_id: currentSchedule?.id || 'default-schedule',
             name: task.name,
             description: task.description,
-            status: 'not-started',
+            status: 'pending',
             priority: 'medium',
-            estimatedHours: task.estimatedHours || 8,
-            actualHours: 0,
-            assignedTo: 'TBD',
-            startDate: '',
-            endDate: '',
-            dependencies: [],
-            progress: 0
+            estimated_days: task.estimatedDays || 1,
+            assigned_to: 'TBD',
+            due_date: new Date(Date.now() + (task.estimatedDays || 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            created_by: 'admin-001',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           };
           
           subtasks.push(subtask);
@@ -538,7 +997,7 @@ const SchedulePage: React.FC = () => {
   };
 
 
-  if (!project || !currentSchedule) {
+  if (!project) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -548,6 +1007,38 @@ const SchedulePage: React.FC = () => {
       </div>
     );
   }
+
+  // Show loading state while loading schedule
+  if (isLoadingSchedule) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading schedule data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if loading failed
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <p className="text-red-600 mb-4">{loadError}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // No loading state needed - always show the schedule interface
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -607,6 +1098,8 @@ const SchedulePage: React.FC = () => {
               <div>messageText="{messageText}"</div>
               <div>scheduleTasks.length={scheduleTasks.length}, hasUnsavedChanges={hasUnsavedChanges.toString()}</div>
               <div>scheduleTasks: {JSON.stringify(scheduleTasks.map(t => ({id: t.id, name: t.name})))}</div>
+              <div>showAIBreakdown: {showAIBreakdown.toString()}</div>
+              <div>AI Button should be visible in action bar</div>
             </div>
           )}
 
@@ -617,6 +1110,17 @@ const SchedulePage: React.FC = () => {
               <p className="text-gray-600">Manage project phases, tasks, and timelines</p>
             </div>
             <div className="flex gap-3">
+              {/* AI Task Breakdown Button */}
+              <button 
+                onClick={() => {
+                  console.log('AI Task Breakdown button clicked!');
+                  setShowAIBreakdown(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                style={{ backgroundColor: '#7c3aed' }} // Fallback color
+              >
+                🤖 AI Task Breakdown
+              </button>
               <button 
                 onClick={handleAddPhases}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -656,7 +1160,7 @@ const SchedulePage: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Schedule: {currentSchedule.name}
+                Schedule: {currentSchedule?.name || 'No Schedule Created'}
               </h3>
             </div>
             <div className="p-6">
@@ -680,7 +1184,22 @@ const SchedulePage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {scheduleTasks.map((task, taskIndex) => {
+                    {scheduleTasks.length === 0 ? (
+                      <tr>
+                        <td colSpan={13} className="border border-gray-300 px-6 py-12 text-center text-gray-500">
+                          <div className="flex flex-col items-center gap-3">
+                            <FileText className="h-12 w-12 text-gray-300" />
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900">No tasks yet</h3>
+                              <p className="text-sm text-gray-500 mt-1">
+                                Get started by creating your first schedule using the AI Task Breakdown or Add Phases buttons above.
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      scheduleTasks.map((task, taskIndex) => {
                       const subtasks = taskHierarchy[task.id] || [];
                       const isExpanded = expandedTasks[task.id] || false;
                       
@@ -689,7 +1208,7 @@ const SchedulePage: React.FC = () => {
                       taskStartDate.setDate(taskStartDate.getDate() + taskIndex);
                       
                       const taskEndDate = new Date(taskStartDate);
-                      taskEndDate.setDate(taskEndDate.getDate() + (task.estimatedDays || 1));
+                      taskEndDate.setDate(taskEndDate.getDate() + (task.estimated_days || 1));
                       
                       return (
                         <React.Fragment key={task.id}>
@@ -708,12 +1227,33 @@ const SchedulePage: React.FC = () => {
                                     )}
                                   </button>
                                 )}
+                                <div className="flex items-center gap-2">
                                 <span 
                                   className="cursor-pointer hover:text-blue-600"
                                   onClick={() => handleTaskSelect(task)}
                                 >
                                   {task.name}
                                 </span>
+                                  {task.created_by === 'ai-system' && (
+                                    <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                                      🤖 AI
+                                    </span>
+                                  )}
+                                  {task.complexity && (
+                                    <span className={`px-2 py-1 text-xs rounded-full ${
+                                      task.complexity === 'high' ? 'bg-red-100 text-red-800' :
+                                      task.complexity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-green-100 text-green-800'
+                                    }`}>
+                                      {task.complexity}
+                                    </span>
+                                  )}
+                                  {task.riskLevel && task.riskLevel > 50 && (
+                                    <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                      ⚠️ {task.riskLevel}%
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-sm">
@@ -742,19 +1282,32 @@ const SchedulePage: React.FC = () => {
                               {task.projectedFinishDate ? new Date(task.projectedFinishDate).toLocaleDateString() : '-'}
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-sm">
-                              {task.workEffort || '-'}
+                              <input
+                                type="text"
+                                value={editableWorkEfforts[task.id] || task.work_effort || ''}
+                                onChange={(e) => handleWorkEffortChange(task.id, e.target.value)}
+                                className="w-full border-0 bg-transparent text-sm"
+                                placeholder="e.g., 8 hours/day"
+                              />
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-sm">
-                              {task.estimatedDays || 1} days
+                              <input
+                                type="number"
+                                min="1"
+                                value={editableDurations[task.id] || task.estimated_days || 1}
+                                onChange={(e) => handleDurationChange(task.id, e.target.value)}
+                                className="w-full border-0 bg-transparent text-sm"
+                                placeholder="Days"
+                              />
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-sm">
-                              {task.assignedResource || '-'}
+                              {task.assigned_to || task.assignedResource || '-'}
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-sm">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 task.status === 'completed' 
                                   ? 'bg-green-100 text-green-800' 
-                                  : task.status === 'in-progress'
+                                  : task.status === 'in_progress'
                                   ? 'bg-blue-100 text-blue-800'
                                   : 'bg-gray-100 text-gray-800'
                               }`}>
@@ -809,19 +1362,32 @@ const SchedulePage: React.FC = () => {
                                 {subtask.projectedFinishDate ? new Date(subtask.projectedFinishDate).toLocaleDateString() : '-'}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm">
-                                {subtask.workEffort || '-'}
+                                <input
+                                  type="text"
+                                  value={editableWorkEfforts[subtask.id] || subtask.work_effort || ''}
+                                  onChange={(e) => handleWorkEffortChange(subtask.id, e.target.value)}
+                                  className="w-full border-0 bg-transparent text-sm"
+                                  placeholder="e.g., 8 hours/day"
+                                />
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm">
-                                {subtask.estimatedDays || 1} days
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={editableDurations[subtask.id] || subtask.estimated_days || 1}
+                                  onChange={(e) => handleDurationChange(subtask.id, e.target.value)}
+                                  className="w-full border-0 bg-transparent text-sm"
+                                  placeholder="Days"
+                                />
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm">
-                                {subtask.assignedResource || '-'}
+                                {subtask.assigned_to || subtask.assignedResource || '-'}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                   subtask.status === 'completed' 
                                     ? 'bg-green-100 text-green-800' 
-                                    : subtask.status === 'in-progress'
+                                    : subtask.status === 'in_progress'
                                     ? 'bg-blue-100 text-blue-800'
                                     : 'bg-gray-100 text-gray-800'
                                 }`}>
@@ -841,7 +1407,8 @@ const SchedulePage: React.FC = () => {
                           ))}
                         </React.Fragment>
                       );
-                    })}
+                    })
+                  )}
                   </tbody>
                 </table>
               </div>
@@ -855,6 +1422,33 @@ const SchedulePage: React.FC = () => {
               onTemplateSelect={handleTemplateSelection}
               onClose={() => setShowTemplates(false)}
             />
+          )}
+
+          {/* AI Task Breakdown Modal */}
+          {showAIBreakdown && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">🤖 AI Task Breakdown</h3>
+                  <button
+                    onClick={() => setShowAIBreakdown(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                <div className="p-4">
+                  <AITaskBreakdown
+                    onTasksGenerated={handleAITasksGenerated}
+                    projectId={project?.id}
+                    existingDescription={project?.description || ''}
+                    projectName={project?.name || ''}
+                    projectCode={project?.code || ''}
+                    projectStatus={project?.status || ''}
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
