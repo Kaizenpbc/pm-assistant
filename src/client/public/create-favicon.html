@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Favicon</title>
+</head>
+<body>
+    <h1>Create Favicon.ico</h1>
+    <p>Click the button to create and download favicon.ico</p>
+    <button onclick="createFavicon()">Create Favicon</button>
+    
+    <script>
+        function createFavicon() {
+            // Create 16x16 canvas for favicon
+            const canvas = document.createElement('canvas');
+            canvas.width = 16;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            
+            // Simple blue background
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(0, 0, 16, 16);
+            
+            // White "P" text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('P', 8, 8);
+            
+            // Download as PNG (browsers will handle .ico conversion)
+            const link = document.createElement('a');
+            link.download = 'favicon.png';
+            link.href = canvas.toDataURL();
+            link.click();
+            
+            alert('Downloaded favicon.png - rename to favicon.ico');
+        }
+    </script>
+</body>
+</html>

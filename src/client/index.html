@@ -1,8 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Language and Accessibility Meta Tags -->
+    <meta name="language" content="en-US" />
+    <meta name="content-language" content="en-US" />
+    <meta name="audience" content="all" />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="rating" content="general" />
     
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="PM Application" />
@@ -17,41 +25,362 @@
     <meta name="msapplication-tap-highlight" content="no" />
     <meta name="theme-color" content="#2563eb" />
     
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: blob: https:;
+      connect-src 'self' http://localhost:3001 ws://localhost:3000 wss://localhost:3000;
+      media-src 'self';
+      object-src 'none';
+      frame-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    " />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="
+      camera=(), 
+      microphone=(), 
+      geolocation=(), 
+      interest-cohort=(), 
+      payment=(), 
+      usb=()
+    " />
+    
     <!-- Icons -->
-    <link rel="apple-touch-icon" href="/icon-192x192.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/icon-16x16.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#2563eb" />
-    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="./icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./icon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./icon-16x16.png" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="mask-icon" href="./safari-pinned-tab.svg" color="#2563eb" />
+    <link rel="shortcut icon" href="./favicon.ico" />
     
     <!-- Splash Screens -->
-    <link rel="apple-touch-startup-image" href="/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" />
-    <link rel="apple-touch-startup-image" href="/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
-    <link rel="apple-touch-startup-image" href="/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
-    <link rel="apple-touch-startup-image" href="/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)" />
-    <link rel="apple-touch-startup-image" href="/splash-1536x2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" />
-    <link rel="apple-touch-startup-image" href="/splash-1668x2224.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)" />
-    <link rel="apple-touch-startup-image" href="/splash-2048x2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="./splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="./splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="./splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="./splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="./splash-1536x2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="./splash-1668x2224.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="./splash-2048x2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" />
     
     <title>PM Application v2</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Fallback content for users with JavaScript disabled -->
+    <noscript lang="en-US">
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 2rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+      ">
+        <div style="
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 20px;
+          padding: 3rem;
+          max-width: 600px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        ">
+          <h1 style="
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+          ">PM Application v2</h1>
+          <p style="
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+          ">Production-ready Project Management Application</p>
+          <div style="
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+          ">
+            <h2 style="
+              font-size: 1.5rem;
+              margin-bottom: 1rem;
+              color: #ffd700;
+            ">⚠️ JavaScript Required</h2>
+            <p style="
+              font-size: 1rem;
+              line-height: 1.6;
+              margin-bottom: 1rem;
+            ">This application requires JavaScript to function properly. Please enable JavaScript in your browser to access the full features.</p>
+            <p style="
+              font-size: 0.9rem;
+              opacity: 0.8;
+            ">If you're having trouble, please check your browser settings or try using a modern browser like Chrome, Firefox, or Safari.</p>
+          </div>
+          <div style="
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+          ">
+            <a href="https://www.google.com/chrome/" style="
+              background: rgba(255, 255, 255, 0.2);
+              color: white;
+              padding: 0.75rem 1.5rem;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 600;
+              transition: all 0.3s ease;
+            ">Get Chrome</a>
+            <a href="https://www.mozilla.org/firefox/" style="
+              background: rgba(255, 255, 255, 0.2);
+              color: white;
+              padding: 0.75rem 1.5rem;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 600;
+              transition: all 0.3s ease;
+            ">Get Firefox</a>
+            <a href="https://www.apple.com/safari/" style="
+              background: rgba(255, 255, 255, 0.2);
+              color: white;
+              padding: 0.75rem 1.5rem;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 600;
+              transition: all 0.3s ease;
+            ">Get Safari</a>
+          </div>
+        </div>
+      </div>
+    </noscript>
+
+    <!-- Loading fallback content for users while React loads -->
+    <div id="root">
+      <!-- This content will be replaced by React -->
+      <!-- Loading Spinner for immediate visual feedback -->
+      <div id="immediate-loading-spinner" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      ">
+        <!-- Spinner Animation -->
+        <div style="
+          width: 80px;
+          height: 80px;
+          border: 6px solid rgba(255, 255, 255, 0.3);
+          border-top: 6px solid #ffffff;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 2rem;
+        "></div>
+        
+        <!-- Loading Text -->
+        <h1 style="
+          color: white;
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-bottom: 1rem;
+          text-align: center;
+        ">PM Application v2</h1>
+        
+        <p style="
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 1rem;
+          text-align: center;
+          margin: 0;
+        ">Loading your workspace...</p>
+      </div>
+      
+      <!-- Detailed Loading Fallback -->
+      <div id="loading-fallback" style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 2rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+      ">
+        <div style="
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 20px;
+          padding: 3rem;
+          max-width: 500px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        ">
+          <!-- Loading spinner -->
+          <div style="
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+          "></div>
+          
+          <h1 style="
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+          ">PM Application v2</h1>
+          
+          <p style="
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+          ">Loading your project management workspace...</p>
+          
+          <div style="
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+          ">
+            <p style="margin: 0;">🚀 Initializing application</p>
+            <p style="margin: 0.5rem 0 0;">⚡ Preparing AI features</p>
+            <p style="margin: 0.5rem 0 0;">🔐 Loading secure workspace</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading spinner CSS animation -->
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Hide loading spinners when React takes over */
+      #root:not(:empty) #immediate-loading-spinner {
+        display: none !important;
+      }
+      
+      #root:not(:empty) #loading-fallback {
+        display: none !important;
+      }
+      
+      /* Ensure immediate spinner shows first */
+      #immediate-loading-spinner {
+        animation: fadeIn 0.3s ease-in;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      /* Accessibility: Respect reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+        #immediate-loading-spinner div {
+          animation: none;
+        }
+        
+        #immediate-loading-spinner {
+          animation: none;
+        }
+        
+        @keyframes spin {
+          0%, 100% { transform: rotate(0deg); }
+        }
+      }
+    </style>
+
     <script type="module" src="/src/main.tsx"></script>
     
     <!-- PWA Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
+          // Dynamic path resolution for deployment flexibility
+          const getBasePath = () => {
+            const pathname = window.location.pathname;
+            if (pathname === '/') return '/';
+            const segments = pathname.split('/').filter(Boolean);
+            if (segments.length === 1 && pathname.endsWith('/')) return `/${segments[0]}/`;
+            if (segments.length > 1) return `/${segments.slice(0, -1).join('/')}/`;
+            return '/';
+          };
+          
+          const basePath = getBasePath();
+          const swPath = basePath === '/' ? '/sw.js' : `${basePath}sw.js`;
+          
+          navigator.serviceWorker.register(swPath)
             .then((registration) => {
               console.log('SW registered: ', registration);
+              
+              // Show success notification to user
+              if (Notification.permission === 'granted') {
+                new Notification('PM Assistant Ready', {
+                  body: 'App is now available offline with enhanced features.',
+                  icon: basePath === '/' ? '/icon-192x192.png' : `${basePath}icon-192x192.png`,
+                  tag: 'pwa-registration-success'
+                });
+              }
             })
             .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
+              console.error('SW registration failed: ', registrationError);
+              
+              // Show error notification to user
+              if (Notification.permission === 'granted') {
+                new Notification('Offline Features Unavailable', {
+                  body: 'Unable to enable offline capabilities. Some features may be limited. Please check your internet connection and try refreshing the page.',
+                  icon: basePath === '/' ? '/icon-192x192.png' : `${basePath}icon-192x192.png`,
+                  tag: 'pwa-registration-error',
+                  requireInteraction: true
+                });
+              }
+              
+              // Also show a console warning for developers
+              console.warn('⚠️ PWA offline capabilities disabled. This may affect app performance and user experience.');
             });
         });
+      } else {
+        console.warn('⚠️ Service Workers not supported in this browser');
+        
+        // Show browser compatibility notice
+        if (Notification.permission === 'granted') {
+          const getBasePath = () => {
+            const pathname = window.location.pathname;
+            if (pathname === '/') return '/';
+            const segments = pathname.split('/').filter(Boolean);
+            if (segments.length === 1 && pathname.endsWith('/')) return `/${segments[0]}/`;
+            if (segments.length > 1) return `/${segments.slice(0, -1).join('/')}/`;
+            return '/';
+          };
+          const basePath = getBasePath();
+          
+          new Notification('Browser Compatibility Notice', {
+            body: 'Your browser does not support offline features. Please consider updating to a modern browser for the best experience.',
+            icon: basePath === '/' ? '/icon-192x192.png' : `${basePath}icon-192x192.png`,
+            tag: 'pwa-unsupported-browser'
+          });
+        }
       }
     </script>
   </body>

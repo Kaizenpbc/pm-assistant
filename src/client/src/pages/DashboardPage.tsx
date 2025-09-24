@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ProjectCard } from '../components/ProjectCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { AIAssistant } from '../components/AIAssistant';
@@ -25,12 +26,36 @@ import {
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [aiAssistant, setAIAssistant] = useState<{
     isOpen: boolean;
     type: 'analysis' | 'recommendations' | 'chat';
   }>({ isOpen: false, type: 'chat' });
   
   const [showCreateProject, setShowCreateProject] = useState(false);
+
+  // Handle URL shortcuts and shared content
+  useEffect(() => {
+    const action = searchParams.get('action');
+    const shared = searchParams.get('shared');
+    
+    if (action === 'create-project') {
+      setShowCreateProject(true);
+    } else if (action === 'ai-tasks') {
+      setAIAssistant({ isOpen: true, type: 'analysis' });
+    } else if (action === 'view-schedules') {
+      // Navigate to first project's schedule if available
+      if (projectsData && projectsData.length > 0) {
+        navigate(`/project/${projectsData[0].id}/schedule`);
+      }
+    }
+    
+    if (shared === 'true') {
+      // Show notification that shared content was received
+      console.log('Shared content received');
+    }
+  }, [searchParams, navigate, projectsData]);
 
   const { data: projectsData, isLoading, error } = useQuery({
     queryKey: ['projects'],

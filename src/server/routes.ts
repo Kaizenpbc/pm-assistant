@@ -4,6 +4,7 @@ import { projectRoutes } from './routes/projects';
 import { userRoutes } from './routes/users';
 import { scheduleRoutes } from './routes/schedules';
 import { aiSchedulingRoutes } from './routes/aiScheduling';
+import { versionRoutes } from './routes/version';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // API routes
@@ -12,6 +13,7 @@ export async function registerRoutes(fastify: FastifyInstance) {
   await fastify.register(userRoutes, { prefix: '/api/v1/users' });
   await fastify.register(scheduleRoutes, { prefix: '/api/v1/schedules' });
   await fastify.register(aiSchedulingRoutes, { prefix: '/api/v1/ai-scheduling' });
+  await fastify.register(versionRoutes, { prefix: '/api/v1' });
 
   // Serve static files (for production)
   if (process.env.NODE_ENV === 'production') {

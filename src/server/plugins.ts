@@ -8,34 +8,76 @@ import swaggerUi from '@fastify/swagger-ui';
 import { config } from './config';
 import { requestLogger } from './utils/logger';
 import { auditService } from './services/auditService';
+import { securityMiddleware, securityValidationMiddleware } from './middleware/securityMiddleware';
 
 export async function registerPlugins(fastify: FastifyInstance) {
   // Request logging middleware
   fastify.addHook('onRequest', requestLogger);
+  
+  // Security middleware
+  fastify.addHook('onRequest', securityMiddleware);
+  fastify.addHook('preHandler', securityValidationMiddleware);
 
   // Security
   await fastify.register(helmet, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"],
-        fontSrc: ["'self'"],
+        styleSrc: [
+          "'self'", 
+          "'unsafe-inline'", 
+          "https://fonts.googleapis.com"
+        ],
+        scriptSrc: [
+          "'self'",
+          ...(config.NODE_ENV === 'development' ? ["'unsafe-eval'", "'unsafe-inline'"] : [])
+        ],
+        imgSrc: [
+          "'self'", 
+          "data:", 
+          "blob:",
+          "https:"
+        ],
+        connectSrc: [
+          "'self'",
+          ...(config.NODE_ENV === 'development' ? [
+            "http://localhost:3000",
+            "ws://localhost:3000",
+            "wss://localhost:3000"
+          ] : [])
+        ],
+        fontSrc: [
+          "'self'",
+          "https://fonts.gstatic.com"
+        ],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
         frameSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests: config.NODE_ENV === 'production' ? [] : null,
       },
+      reportOnly: config.NODE_ENV === 'development'
     },
-    hsts: {
+    hsts: config.NODE_ENV === 'production' ? {
       maxAge: 31536000,
       includeSubDomains: true,
       preload: true
-    },
+    } : false,
     noSniff: true,
     xssFilter: true,
-    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    crossOriginEmbedderPolicy: false, // Disable for development
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    dnsPrefetchControl: { allow: false },
+    frameguard: { action: 'deny' },
+    hidePoweredBy: true,
+    ieNoOpen: true,
+    noSniff: true,
+    originAgentCluster: true,
+    permittedCrossDomainPolicies: false,
+    xssFilter: true
   });
 
   // CORS

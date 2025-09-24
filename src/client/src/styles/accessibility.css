@@ -1,0 +1,421 @@
+/**
+ * Accessibility Styles
+ * Comprehensive CSS for accessibility features and language support
+ */
+
+/* Screen Reader Only Content */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Focus Styles */
+.sr-only.focus:not-sr-only:focus,
+.sr-only.focus\:not-sr-only:focus {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: normal !important;
+}
+
+/* Skip Links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 9999;
+  font-weight: bold;
+  transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --text-color: #000000;
+  --background-color: #ffffff;
+  --border-color: #000000;
+  --focus-color: #0000ff;
+  --link-color: #0000ff;
+  --button-background: #000000;
+  --button-text: #ffffff;
+}
+
+.high-contrast * {
+  color: var(--text-color) !important;
+  background-color: var(--background-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+.high-contrast a {
+  color: var(--link-color) !important;
+  text-decoration: underline !important;
+}
+
+.high-contrast button {
+  background-color: var(--button-background) !important;
+  color: var(--button-text) !important;
+  border: 2px solid var(--border-color) !important;
+}
+
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  border: 2px solid var(--border-color) !important;
+  background-color: var(--background-color) !important;
+  color: var(--text-color) !important;
+}
+
+/* Focus Indicators */
+*:focus {
+  outline: 2px solid var(--focus-color, #0066cc);
+  outline-offset: 2px;
+}
+
+.keyboard-focus *:focus {
+  outline: 3px solid var(--focus-color, #0066cc);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3);
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dark Mode Support */
+.dark-mode {
+  --text-color: #ffffff;
+  --background-color: #000000;
+  --border-color: #ffffff;
+  --focus-color: #66b3ff;
+  --link-color: #66b3ff;
+}
+
+.dark-mode * {
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+/* Language-specific styles */
+[lang="ar"],
+[lang="he"],
+[lang="fa"],
+[lang="ur"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[lang="ar"] .skip-link,
+[lang="he"] .skip-link,
+[lang="fa"] .skip-link,
+[lang="ur"] .skip-link {
+  left: auto;
+  right: 6px;
+}
+
+/* RTL Support */
+.direction-rtl {
+  direction: rtl;
+}
+
+.direction-rtl .flex {
+  flex-direction: row-reverse;
+}
+
+.direction-rtl .text-left {
+  text-align: right;
+}
+
+.direction-rtl .text-right {
+  text-align: left;
+}
+
+.direction-rtl .ml-4 {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+.direction-rtl .mr-4 {
+  margin-right: 0;
+  margin-left: 1rem;
+}
+
+.direction-rtl .pl-4 {
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+.direction-rtl .pr-4 {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* Screen Reader Active */
+.screen-reader-active .sr-only {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: normal !important;
+  border: 0 !important;
+}
+
+/* Keyboard Navigation */
+.keyboard-navigation button:focus,
+.keyboard-navigation input:focus,
+.keyboard-navigation select:focus,
+.keyboard-navigation textarea:focus,
+.keyboard-navigation a:focus {
+  outline: 3px solid #0066cc;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3);
+}
+
+/* Form Accessibility */
+input:invalid {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 1px #dc2626;
+}
+
+input:invalid:focus {
+  outline-color: #dc2626;
+}
+
+input:valid {
+  border-color: #059669;
+}
+
+input:valid:focus {
+  outline-color: #059669;
+}
+
+/* Required field indicators */
+.required::after {
+  content: " *";
+  color: #dc2626;
+  font-weight: bold;
+}
+
+/* Error states */
+.error {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 1px #dc2626 !important;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Success states */
+.success {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 1px #059669 !important;
+}
+
+.success-message {
+  color: #059669;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Loading states */
+.loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Announcements */
+[aria-live] {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Button accessibility */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button:disabled:focus {
+  outline: none;
+}
+
+/* Link accessibility */
+a:focus {
+  outline: 2px solid #0066cc;
+  outline-offset: 2px;
+}
+
+a:visited {
+  color: #7c3aed;
+}
+
+/* Table accessibility */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  background-color: #f3f4f6;
+  font-weight: bold;
+  text-align: left;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+}
+
+td {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+}
+
+/* Responsive text sizing */
+@media (max-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 769px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sr-only {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+    border: 0 !important;
+  }
+  
+  .skip-link {
+    display: none;
+  }
+  
+  a {
+    text-decoration: underline;
+  }
+  
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+}
+
+/* Skeleton Loader Styles */
+.skeleton-loader {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  display: block;
+}
+
+.dark-mode .skeleton-loader {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}
+
+.high-contrast .skeleton-loader {
+  background: linear-gradient(90deg, #d1d5db 25%, #9ca3af 50%, #d1d5db 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Respect reduced motion for skeleton loaders */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-loader {
+    animation: none;
+    background: #f0f0f0;
+  }
+  
+  .dark-mode .skeleton-loader {
+    background: #374151;
+  }
+  
+  .high-contrast .skeleton-loader {
+    background: #d1d5db;
+  }
+}
+
+/* Custom properties for theme support */
+:root {
+  --focus-color: #0066cc;
+  --error-color: #dc2626;
+  --success-color: #059669;
+  --warning-color: #d97706;
+  --info-color: #0284c7;
+}
+
+/* High contrast custom properties */
+.high-contrast {
+  --focus-color: #0000ff;
+  --error-color: #ff0000;
+  --success-color: #00ff00;
+  --warning-color: #ffff00;
+  --info-color: #00ffff;
+}

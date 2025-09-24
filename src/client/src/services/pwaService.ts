@@ -23,6 +23,9 @@ class PWAService {
   }
 
   private async initialize(): Promise<void> {
+    // Request notification permissions early for better user experience
+    await this.requestNotificationPermission();
+    
     // Check if app is already installed
     this.isInstalled = this.checkIfInstalled();
     
@@ -97,8 +100,20 @@ class PWAService {
   private async registerServiceWorker(): Promise<void> {
     if ('serviceWorker' in navigator) {
       try {
-        this.registration = await navigator.serviceWorker.register('/sw.js');
+        const { pathService } = await import('./pathService');
+        const swPath = pathService.getServiceWorkerPath();
+        this.registration = await navigator.serviceWorker.register(swPath);
         console.log('✅ Service Worker registered successfully');
+        
+        // Show success notification to user
+        await this.showNotification('PM Assistant Ready', {
+          body: 'App is now available offline with enhanced features.',
+          tag: 'pwa-registration-success'
+        });
+        
+        // Also show toast notification
+        const { toastService } = await import('./toastService');
+        toastService.pwaRegistrationSuccess();
         
         // Listen for updates
         this.registration.addEventListener('updatefound', this.handleServiceWorkerUpdate.bind(this));
@@ -108,7 +123,32 @@ class PWAService {
         
       } catch (error) {
         console.error('❌ Service Worker registration failed:', error);
+        
+        // Show error notification to user with actionable information
+        await this.showNotification('Offline Features Unavailable', {
+          body: 'Unable to enable offline capabilities. Some features may be limited. Please check your internet connection and try refreshing the page.',
+          tag: 'pwa-registration-error',
+          requireInteraction: true
+        });
+        
+        // Also show toast notification
+        const { toastService } = await import('./toastService');
+        toastService.pwaRegistrationError();
+        
+        // Also show a console warning for developers
+        console.warn('⚠️ PWA offline capabilities disabled. This may affect app performance and user experience.');
       }
+    } else {
+      // Browser doesn't support service workers
+      console.warn('⚠️ Service Workers not supported in this browser');
+      await this.showNotification('Browser Compatibility Notice', {
+        body: 'Your browser does not support offline features. Please consider updating to a modern browser for the best experience.',
+        tag: 'pwa-unsupported-browser'
+      });
+      
+      // Also show toast notification
+      const { toastService } = await import('./toastService');
+      toastService.pwaUnsupportedBrowser();
     }
   }
 
@@ -284,9 +324,10 @@ class PWAService {
 
   public async showNotification(title: string, options?: NotificationOptions): Promise<void> {
     if (Notification.permission === 'granted') {
+      const { pathService } = await import('./pathService');
       const notification = new Notification(title, {
-        icon: '/icon-192x192.png',
-        badge: '/badge-72x72.png',
+        icon: pathService.getIconPath('192x192'),
+        badge: pathService.resolve('/badge-72x72.png'),
         ...options
       });
 

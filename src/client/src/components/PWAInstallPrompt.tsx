@@ -6,6 +6,13 @@ interface PWAInstallPromptProps {
   onDismiss?: () => void;
 }
 
+interface InstallPromptState {
+  isVisible: boolean;
+  canInstall: boolean;
+  isInstalled: boolean;
+  isSupported: boolean;
+}
+
 const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   onInstall,
   onDismiss
@@ -15,6 +22,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   const [hasUpdate, setHasUpdate] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     const checkInstallStatus = async () => {
@@ -26,8 +34,9 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
       setIsInstalled(isAppInstalled);
       setHasUpdate(hasUpdateAvailable);
       
-      // Show prompt if can install and not already installed
-      if (canInstallApp && !isAppInstalled) {
+      // Show prompt if can install and not already installed and not dismissed
+      const wasDismissed = localStorage.getItem('pwa-install-dismissed');
+      if (canInstallApp && !isAppInstalled && !wasDismissed) {
         setShowPrompt(true);
       }
     };
@@ -66,6 +75,8 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 
   const handleDismiss = () => {
     setShowPrompt(false);
+    setDismissed(true);
+    localStorage.setItem('pwa-install-dismissed', 'true');
     onDismiss?.();
   };
 
