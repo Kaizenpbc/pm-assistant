@@ -13,7 +13,14 @@
     "build:client": "cd src/client && npm run build",
     "start": "node dist/server/index.js",
     "test": "vitest",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:ui": "vitest --ui",
+    "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "type-check": "tsc --noEmit",
@@ -51,6 +58,11 @@
   "devDependencies": {
     "concurrently": "^9.2.1",
     "nodemon": "^3.1.10",
-    "tsx": "^4.20.5"
+    "tsx": "^4.20.5",
+    "vitest": "^2.1.8",
+    "@playwright/test": "^1.48.2",
+    "@testing-library/jest-dom": "^6.6.3",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.2"
   }
 }
