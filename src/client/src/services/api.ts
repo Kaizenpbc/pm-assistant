@@ -192,6 +192,33 @@ class ApiService {
     const response = await this.api.get(`/ai-scheduling/insights/${projectId}`);
     return response.data;
   }
+
+  // Health scoring endpoints
+  async getProjectHealth(projectId: string) {
+    const response = await this.api.get(`/health/${projectId}`);
+    return response.data;
+  }
+
+  async calculateHealthScore(healthData: {
+    startDate: string;
+    endDate: string;
+    currentDate?: string;
+    budgetAllocated: number;
+    budgetSpent: number;
+    assignedResources: number;
+    requiredResources: number;
+    highRisks: number;
+    mediumRisks: number;
+    lowRisks: number;
+    completedTasks: number;
+    totalTasks: number;
+    openIssues: number;
+    criticalIssues: number;
+    resolvedIssues: number;
+  }) {
+    const response = await this.api.post('/health/calculate', healthData);
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

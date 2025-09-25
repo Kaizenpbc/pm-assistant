@@ -48,6 +48,12 @@ export const ProjectPage: React.FC = () => {
     enabled: !!id,
   });
 
+  const { data: healthData, isLoading: isHealthLoading } = useQuery({
+    queryKey: ['project-health', id],
+    queryFn: () => apiService.getProjectHealth(id!),
+    enabled: !!id,
+  });
+
   // Helper functions
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -737,20 +743,149 @@ export const ProjectPage: React.FC = () => {
           )}
 
           {activeTab === 'health' && (
-            <div className="card">
-              <div className="card-content">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Health Score</h3>
-                <div className="text-center">
-                  <div className="text-6xl font-bold text-green-600 mb-4">78/100</div>
-                  <p className="text-gray-600 mb-4">Overall project health is good</p>
-                  <button 
-                    onClick={() => setAIAssistant({ isOpen: true, type: 'analysis' })}
-                    className="btn btn-primary"
-                  >
-                    Get AI Health Analysis
-                  </button>
+            <div className="space-y-6">
+              {/* Health Score Overview */}
+              <div className="card">
+                <div className="card-content">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Health Score</h3>
+                  {isHealthLoading ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                      <p className="text-gray-600">Calculating health score...</p>
+                    </div>
+                  ) : healthData?.success ? (
+                    <div className="text-center">
+                      <div className={`text-6xl font-bold mb-4 ${
+                        healthData.health.healthColor === 'green' ? 'text-green-600' :
+                        healthData.health.healthColor === 'yellow' ? 'text-yellow-600' :
+                        healthData.health.healthColor === 'orange' ? 'text-orange-600' :
+                        healthData.health.healthColor === 'red' ? 'text-red-600' :
+                        'text-red-800'
+                      }`}>
+                        {healthData.health.overallScore}/100
+                      </div>
+                      <p className="text-gray-600 mb-4 capitalize">
+                        Overall project health is {healthData.health.healthStatus}
+                      </p>
+                      <button 
+                        onClick={() => setAIAssistant({ isOpen: true, type: 'analysis' })}
+                        className="btn btn-primary"
+                      >
+                        Get AI Health Analysis
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-red-600">Failed to load health data</p>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Health Factors Breakdown */}
+              {healthData?.success && (
+                <div className="card">
+                  <div className="card-content">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Health Factors</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-blue-900">Timeline</span>
+                          <span className="text-sm text-blue-700">{healthData.health.factors.timelineHealth.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-blue-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${healthData.health.factors.timelineHealth}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-green-900">Budget</span>
+                          <span className="text-sm text-green-700">{healthData.health.factors.budgetHealth.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-green-200 rounded-full h-2">
+                          <div 
+                            className="bg-green-600 h-2 rounded-full" 
+                            style={{ width: `${healthData.health.factors.budgetHealth}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-purple-50 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-purple-900">Resources</span>
+                          <span className="text-sm text-purple-700">{healthData.health.factors.resourceHealth.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-purple-200 rounded-full h-2">
+                          <div 
+                            className="bg-purple-600 h-2 rounded-full" 
+                            style={{ width: `${healthData.health.factors.resourceHealth}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-orange-50 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-orange-900">Risks</span>
+                          <span className="text-sm text-orange-700">{healthData.health.factors.riskHealth.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-orange-200 rounded-full h-2">
+                          <div 
+                            className="bg-orange-600 h-2 rounded-full" 
+                            style={{ width: `${healthData.health.factors.riskHealth}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-indigo-50 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-indigo-900">Progress</span>
+                          <span className="text-sm text-indigo-700">{healthData.health.factors.progressHealth.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-indigo-200 rounded-full h-2">
+                          <div 
+                            className="bg-indigo-600 h-2 rounded-full" 
+                            style={{ width: `${healthData.health.factors.progressHealth}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-red-50 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-red-900">Issues</span>
+                          <span className="text-sm text-red-700">{healthData.health.factors.issueHealth.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-red-200 rounded-full h-2">
+                          <div 
+                            className="bg-red-600 h-2 rounded-full" 
+                            style={{ width: `${healthData.health.factors.issueHealth}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {healthData?.success && healthData.health.recommendations.length > 0 && (
+                <div className="card">
+                  <div className="card-content">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h3>
+                    <div className="space-y-3">
+                      {healthData.health.recommendations.map((recommendation, index) => (
+                        <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-gray-700">{recommendation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -826,7 +961,7 @@ export const ProjectPage: React.FC = () => {
                   Configure Smart Alerts
                 </button>
               </div>
-                  </div>
+            </div>
           )}
 
           {activeTab === 'ai-tasks' && (
@@ -840,9 +975,9 @@ export const ProjectPage: React.FC = () => {
                 >
                   Get AI Task Recommendations
                 </button>
-                  </div>
-                    </div>
-                  )}
+              </div>
+            </div>
+          )}
 
           {activeTab === 'schedule' && (
             <div className="card">
@@ -857,7 +992,7 @@ export const ProjectPage: React.FC = () => {
                     To view and manage your project schedule, click the button below to open the dedicated Schedule page.
                   </p>
                   <button 
-                    onClick={() => navigate(`/schedule/${project.id}`)}
+                    onClick={() => navigate(`/project/${project.id}/schedule`)}
                     className="btn btn-primary"
                   >
                     View Project Schedule
@@ -874,33 +1009,187 @@ export const ProjectPage: React.FC = () => {
           )}
 
           {activeTab === 'raid' && (
-            <div className="card">
-              <div className="card-content">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">RAID Management</h3>
-                <p className="text-gray-600">RAID (Risks, Assumptions, Issues, Dependencies) management coming soon...</p>
-                <button 
-                  onClick={() => setAIAssistant({ isOpen: true, type: 'analysis' })}
-                  className="btn btn-primary mt-4"
-                >
-                  Analyze RAID Items
-                </button>
+            <div className="space-y-6">
+              {/* Risks Section */}
+              <div className="card">
+                <div className="card-content">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                    Risks
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-red-900">High Risk: Resource Shortage</h4>
+                          <p className="text-sm text-red-700">Potential delay due to limited skilled developers</p>
+                        </div>
+                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">High</span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-yellow-900">Medium Risk: Timeline Pressure</h4>
+                          <p className="text-sm text-yellow-700">Tight deadline may impact quality</p>
+                        </div>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Medium</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Issues Section */}
+              <div className="card">
+                <div className="card-content">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <X className="h-5 w-5 text-orange-500" />
+                    Issues
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-orange-900">Active Issue: API Integration Delay</h4>
+                          <p className="text-sm text-orange-700">Third-party API documentation is incomplete</p>
+                        </div>
+                        <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">Open</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dependencies Section */}
+              <div className="card">
+                <div className="card-content">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Target className="h-5 w-5 text-blue-500" />
+                    Dependencies
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-blue-900">External: Design Approval</h4>
+                          <p className="text-sm text-blue-700">Waiting for client approval on UI mockups</p>
+                        </div>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Pending</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Analysis Button */}
+              <div className="card">
+                <div className="card-content">
+                  <button 
+                    onClick={() => setAIAssistant({ isOpen: true, type: 'analysis' })}
+                    className="btn btn-primary w-full"
+                  >
+                    🤖 Get AI RAID Analysis
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
           {activeTab === 'checklist' && (
-            <div className="card">
-              <div className="card-content">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">PM Checklist</h3>
-                <p className="text-gray-600">Project management checklist coming soon...</p>
-                <button 
-                  onClick={() => setAIAssistant({ isOpen: true, type: 'recommendations' })}
-                  className="btn btn-primary mt-4"
-                >
-                  Get PM Checklist
-                </button>
+            <div className="space-y-6">
+              {/* Project Initiation Checklist */}
+              <div className="card">
+                <div className="card-content">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <CheckSquare className="h-5 w-5 text-green-500" />
+                    Project Initiation
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <CheckSquare className="h-5 w-5 text-green-500" />
+                      <span className="text-sm text-gray-700">Project charter approved</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckSquare className="h-5 w-5 text-green-500" />
+                      <span className="text-sm text-gray-700">Stakeholder analysis completed</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Square className="h-5 w-5 text-gray-400" />
+                      <span className="text-sm text-gray-500">Risk register created</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Square className="h-5 w-5 text-gray-400" />
+                      <span className="text-sm text-gray-500">Budget allocated</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Planning Checklist */}
+              <div className="card">
+                <div className="card-content">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Target className="h-5 w-5 text-blue-500" />
+                    Planning Phase
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <CheckSquare className="h-5 w-5 text-green-500" />
+                      <span className="text-sm text-gray-700">Work breakdown structure created</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckSquare className="h-5 w-5 text-green-500" />
+                      <span className="text-sm text-gray-700">Project schedule developed</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Square className="h-5 w-5 text-gray-400" />
+                      <span className="text-sm text-gray-500">Resource plan finalized</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Square className="h-5 w-5 text-gray-400" />
+                      <span className="text-sm text-gray-500">Communication plan established</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Execution Checklist */}
+              <div className="card">
+                <div className="card-content">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-purple-500" />
+                    Execution Phase
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Square className="h-5 w-5 text-gray-400" />
+                      <span className="text-sm text-gray-500">Team kickoff meeting held</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Square className="h-5 w-5 text-gray-400" />
+                      <span className="text-sm text-gray-500">Progress tracking system setup</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Square className="h-5 w-5 text-gray-400" />
+                      <span className="text-sm text-gray-500">Quality assurance process defined</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Recommendations */}
+              <div className="card">
+                <div className="card-content">
+                  <button 
+                    onClick={() => setAIAssistant({ isOpen: true, type: 'recommendations' })}
+                    className="btn btn-primary w-full"
+                  >
+                    🤖 Get AI PM Recommendations
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
           )}
         </div>
       </div>
