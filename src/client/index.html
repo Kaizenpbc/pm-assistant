@@ -41,7 +41,6 @@
       upgrade-insecure-requests;
     " />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="
@@ -317,18 +316,8 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // Dynamic path resolution for deployment flexibility
-          const getBasePath = () => {
-            const pathname = window.location.pathname;
-            if (pathname === '/') return '/';
-            const segments = pathname.split('/').filter(Boolean);
-            if (segments.length === 1 && pathname.endsWith('/')) return `/${segments[0]}/`;
-            if (segments.length > 1) return `/${segments.slice(0, -1).join('/')}/`;
-            return '/';
-          };
-          
-          const basePath = getBasePath();
-          const swPath = basePath === '/' ? '/sw.js' : `${basePath}sw.js`;
+          // Use root path for service worker in development
+          const swPath = '/sw.js';
           
           navigator.serviceWorker.register(swPath)
             .then((registration) => {
@@ -338,7 +327,7 @@
               if (Notification.permission === 'granted') {
                 new Notification('PM Assistant Ready', {
                   body: 'App is now available offline with enhanced features.',
-                  icon: basePath === '/' ? '/icon-192x192.png' : `${basePath}icon-192x192.png`,
+                  icon: '/icon-192x192.png',
                   tag: 'pwa-registration-success'
                 });
               }
@@ -350,7 +339,7 @@
               if (Notification.permission === 'granted') {
                 new Notification('Offline Features Unavailable', {
                   body: 'Unable to enable offline capabilities. Some features may be limited. Please check your internet connection and try refreshing the page.',
-                  icon: basePath === '/' ? '/icon-192x192.png' : `${basePath}icon-192x192.png`,
+                  icon: '/icon-192x192.png',
                   tag: 'pwa-registration-error',
                   requireInteraction: true
                 });

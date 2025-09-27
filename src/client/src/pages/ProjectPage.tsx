@@ -158,8 +158,8 @@ export const ProjectPage: React.FC = () => {
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(project.status)}`}>
                     {project.status.replace('_', ' ').toUpperCase()}
                   </span>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(project.priority)}`}>
-                    {project.priority.toUpperCase()}
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(project.priority || 'medium')}`}>
+                    {(project.priority || 'medium').toUpperCase()}
                   </span>
                   <span className="text-sm text-gray-500">{project.code || 'No Code'}</span>
                 </div>
@@ -437,13 +437,13 @@ export const ProjectPage: React.FC = () => {
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Priority</label>
-                        <p className="text-sm text-gray-900 mt-1 capitalize">{project.priority}</p>
+                        <p className="text-sm text-gray-900 mt-1 capitalize">{project.priority || 'Medium'}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium text-gray-500">Status</label>
-                        <p className="text-sm text-gray-900 mt-1 capitalize">{project.status.replace('_', ' ')}</p>
+                        <p className="text-sm text-gray-900 mt-1 capitalize">{(project.status || 'unknown').replace('_', ' ')}</p>
                       </div>
                     <div>
                         <label className="text-sm font-medium text-gray-500">Created</label>

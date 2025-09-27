@@ -75,8 +75,8 @@ function App() {
   return (
     <ErrorBoundary>
       <AppLoadingWrapper fallbackMessage="Loading your project management workspace...">
-        <AppShell>
-          <Router>
+        <Router>
+          <AppShell>
             <div className="min-h-screen bg-gray-50">
               <Routes>
                 <Route 
@@ -95,6 +95,12 @@ function App() {
                   path="/project/:id" 
                   element={
                     isAuthenticated ? <ProjectPage /> : <Navigate to="/login" replace />
+                  } 
+                />
+                <Route 
+                  path="/project/:id/schedule" 
+                  element={
+                    isAuthenticated ? <SchedulePage /> : <Navigate to="/login" replace />
                   } 
                 />
                 <Route 
@@ -130,8 +136,8 @@ function App() {
                 onRemoveToast={(id) => toastService.removeToast(id)} 
               />
             </div>
-          </Router>
-        </AppShell>
+          </AppShell>
+        </Router>
       </AppLoadingWrapper>
     </ErrorBoundary>
   );

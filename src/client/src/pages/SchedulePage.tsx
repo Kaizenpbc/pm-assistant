@@ -81,7 +81,8 @@ interface ProjectSchedule {
 }
 
 const SchedulePage: React.FC = () => {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId, id } = useParams<{ projectId?: string; id?: string }>();
+  const actualProjectId = projectId || id;
   const navigate = useNavigate();
   
   const [project, setProject] = useState<Project | null>(null);
@@ -308,7 +309,7 @@ const SchedulePage: React.FC = () => {
 
   useEffect(() => {
     // Load project data
-    const currentProject = mockProjects[projectId || '2'];
+    const currentProject = mockProjects[actualProjectId || '2'];
     setProject(currentProject);
     
     // Load schedule data from database
@@ -392,7 +393,7 @@ const SchedulePage: React.FC = () => {
     };
     
     loadScheduleData();
-  }, [projectId]);
+  }, [actualProjectId]);
 
   // Initialize editable states with current task data
   useEffect(() => {
