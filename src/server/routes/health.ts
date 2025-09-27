@@ -24,33 +24,7 @@ export async function healthRoutes(fastify: FastifyInstance) {
   const healthService = new ProjectHealthService(fastify);
 
   // Get project health score
-  fastify.get('/health/:projectId', {
-    schema: {
-      params: z.object({
-        projectId: z.string()
-      }),
-      response: {
-        200: z.object({
-          success: z.boolean(),
-          health: z.object({
-            overallScore: z.number(),
-            healthStatus: z.enum(['excellent', 'good', 'fair', 'poor', 'critical']),
-            healthColor: z.enum(['green', 'yellow', 'orange', 'red', 'dark-red']),
-            factors: z.object({
-              timelineHealth: z.number(),
-              budgetHealth: z.number(),
-              resourceHealth: z.number(),
-              riskHealth: z.number(),
-              progressHealth: z.number(),
-              issueHealth: z.number()
-            }),
-            recommendations: z.array(z.string()),
-            lastUpdated: z.string()
-          })
-        })
-      }
-    }
-  }, async (request, reply) => {
+  fastify.get('/health/:projectId', async (request, reply) => {
     try {
       const { projectId } = request.params;
       
@@ -93,31 +67,7 @@ export async function healthRoutes(fastify: FastifyInstance) {
   });
 
   // Calculate health score with custom data
-  fastify.post('/health/calculate', {
-    schema: {
-      body: healthDataSchema,
-      response: {
-        200: z.object({
-          success: z.boolean(),
-          health: z.object({
-            overallScore: z.number(),
-            healthStatus: z.enum(['excellent', 'good', 'fair', 'poor', 'critical']),
-            healthColor: z.enum(['green', 'yellow', 'orange', 'red', 'dark-red']),
-            factors: z.object({
-              timelineHealth: z.number(),
-              budgetHealth: z.number(),
-              resourceHealth: z.number(),
-              riskHealth: z.number(),
-              progressHealth: z.number(),
-              issueHealth: z.number()
-            }),
-            recommendations: z.array(z.string()),
-            lastUpdated: z.string()
-          })
-        })
-      }
-    }
-  }, async (request, reply) => {
+  fastify.post('/health/calculate', async (request, reply) => {
     try {
       const projectData = request.body as ProjectHealthData;
       

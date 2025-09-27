@@ -1,11 +1,55 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs').promises;
+const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = 3002;
 
-// In-memory storage for tasks (in a real app, this would be a database)
-const taskStorage = new Map(); // scheduleId -> array of tasks
+// File-based storage for persistence
+const DATA_DIR = path.join(__dirname, 'data');
+const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
+
+// In-memory storage for tasks (synced with file)
+let taskStorage = new Map(); // scheduleId -> array of tasks
+
+// Ensure data directory exists
+async function ensureDataDir() {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+  } catch (error) {
+    console.error('Error creating data directory:', error);
+  }
+}
+
+// Load tasks from file
+async function loadTasksFromFile() {
+  try {
+    await ensureDataDir();
+    const data = await fs.readFile(TASKS_FILE, 'utf8');
+    const tasksData = JSON.parse(data);
+    taskStorage = new Map(Object.entries(tasksData));
+    console.log('✅ Tasks loaded from file');
+  } catch (error) {
+    console.log('📝 No existing tasks file, starting fresh');
+    taskStorage = new Map();
+  }
+}
+
+// Save tasks to file
+async function saveTasksToFile() {
+  try {
+    await ensureDataDir();
+    const tasksData = Object.fromEntries(taskStorage);
+    await fs.writeFile(TASKS_FILE, JSON.stringify(tasksData, null, 2));
+    console.log('💾 Tasks saved to file');
+  } catch (error) {
+    console.error('❌ Error saving tasks to file:', error);
+  }
+}
+
+// Initialize file storage
+loadTasksFromFile();
 
 // Middleware
 app.use(cors({
@@ -398,68 +442,16 @@ app.get('/api/v1/schedules/:scheduleId/tasks', (req, res) => {
   try {
     const { scheduleId } = req.params;
     
-    // Mock tasks data for testing
-    const mockTasks = [
-      {
-        id: '1',
-        scheduleId: scheduleId,
-        name: 'Project Planning',
-        description: 'Initial project planning phase',
-        status: 'completed',
-        startDate: '2024-01-15',
-        endDate: '2024-01-20',
-        progress: 100,
-        priority: 'high',
-        assignee: 'John Doe',
-        dependencies: []
-      },
-      {
-        id: '2',
-        scheduleId: scheduleId,
-        name: 'Development Phase',
-        description: 'Main development work',
-        status: 'in-progress',
-        startDate: '2024-01-21',
-        endDate: '2024-02-15',
-        progress: 65,
-        priority: 'high',
-        assignee: 'Jane Smith',
-        dependencies: ['1']
-      },
-      {
-        id: '3',
-        scheduleId: scheduleId,
-        name: 'Testing Phase',
-        description: 'Quality assurance and testing',
-        status: 'pending',
-        startDate: '2024-02-16',
-        endDate: '2024-02-28',
-        progress: 0,
-        priority: 'medium',
-        assignee: 'Bob Johnson',
-        dependencies: ['2']
-      }
-    ];
+    // No mock data - tasks come from storage only
+    // Removed mock data - using file storage only
     
-    // Get tasks from storage, or return empty array if none exist
     const tasks = taskStorage.get(scheduleId) || [];
     
-    // If no tasks are stored, return some default mock tasks for initial setup
-    if (tasks.length === 0) {
-      // Store the default tasks
-      taskStorage.set(scheduleId, mockTasks);
-      
-      res.status(200).json({
-        success: true,
-        tasks: mockTasks
-      });
-    } else {
-      // Return the stored tasks
-      res.status(200).json({
-        success: true,
-        tasks: tasks
-      });
-    }
+    // Return the stored tasks (empty array if none exist)
+    res.status(200).json({
+      success: true,
+      tasks: tasks
+    });
   } catch (error) {
     console.error('Tasks endpoint error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch tasks' });
@@ -467,7 +459,7 @@ app.get('/api/v1/schedules/:scheduleId/tasks', (req, res) => {
 });
 
 // Create a new task in a schedule
-app.post('/api/v1/schedules/:scheduleId/tasks', (req, res) => {
+app.post('/api/v1/schedules/:scheduleId/tasks', async (req, res) => {
   try {
     const { scheduleId } = req.params;
     const taskData = req.body;
@@ -496,6 +488,9 @@ app.post('/api/v1/schedules/:scheduleId/tasks', (req, res) => {
     const existingTasks = taskStorage.get(scheduleId) || [];
     existingTasks.push(newTask);
     taskStorage.set(scheduleId, existingTasks);
+    
+    // Save to file for persistence
+    await saveTasksToFile();
     
     res.status(201).json({
       success: true,
@@ -840,7 +835,7 @@ app.post('/api/v1/ai-scheduling/generate-tasks', (req, res) => {
 });
 
 // Update an existing task in a schedule
-app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', (req, res) => {
+app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
   try {
     const { scheduleId, taskId } = req.params;
     const taskData = req.body;
@@ -873,6 +868,9 @@ app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', (req, res) => {
     if (taskIndex !== -1) {
       existingTasks[taskIndex] = updatedTask;
       taskStorage.set(scheduleId, existingTasks);
+      
+      // Save to file for persistence
+      await saveTasksToFile();
     }
     
     res.status(200).json({

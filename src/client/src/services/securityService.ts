@@ -19,7 +19,7 @@ class SecurityService {
   private getSecurityConfig(): SecurityConfig {
     const isDevelopment = import.meta.env.DEV;
     const baseUrl = window.location.origin;
-    const apiUrl = isDevelopment ? 'http://localhost:3001' : `${baseUrl}/api`;
+    const apiUrl = isDevelopment ? 'http://localhost:3002' : `${baseUrl}/api`;
     const wsUrl = isDevelopment ? 'ws://localhost:3000' : `wss://${window.location.host}`;
 
     return {

@@ -115,7 +115,7 @@ class PathService {
     
     // In development, use the dev server
     if (import.meta.env.DEV) {
-      return 'http://localhost:3001';
+      return 'http://localhost:3002';
     }
 
     // In production, use the same domain with /api prefix
