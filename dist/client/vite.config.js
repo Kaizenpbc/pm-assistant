@@ -16,10 +16,20 @@ exports.default = (0, vite_1.defineConfig)({
     },
     server: {
         port: 3000,
+        host: true,
+        hmr: {
+            port: 3000,
+            host: 'localhost',
+        },
+        watch: {
+            usePolling: true,
+            interval: 1000,
+        },
         proxy: {
             '/api': {
                 target: 'http://localhost:3001',
                 changeOrigin: true,
+                secure: false,
             },
         },
     },

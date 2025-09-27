@@ -9,6 +9,7 @@ const PWAInstallPrompt = ({ onInstall, onDismiss }) => {
     const [hasUpdate, setHasUpdate] = (0, react_1.useState)(false);
     const [isInstalling, setIsInstalling] = (0, react_1.useState)(false);
     const [showPrompt, setShowPrompt] = (0, react_1.useState)(false);
+    const [dismissed, setDismissed] = (0, react_1.useState)(false);
     (0, react_1.useEffect)(() => {
         const checkInstallStatus = async () => {
             const canInstallApp = pwaService_1.pwaService.canInstall();
@@ -17,7 +18,8 @@ const PWAInstallPrompt = ({ onInstall, onDismiss }) => {
             setCanInstall(canInstallApp);
             setIsInstalled(isAppInstalled);
             setHasUpdate(hasUpdateAvailable);
-            if (canInstallApp && !isAppInstalled) {
+            const wasDismissed = localStorage.getItem('pwa-install-dismissed');
+            if (canInstallApp && !isAppInstalled && !wasDismissed) {
                 setShowPrompt(true);
             }
         };
@@ -51,6 +53,8 @@ const PWAInstallPrompt = ({ onInstall, onDismiss }) => {
     };
     const handleDismiss = () => {
         setShowPrompt(false);
+        setDismissed(true);
+        localStorage.setItem('pwa-install-dismissed', 'true');
         onDismiss?.();
     };
     if (isInstalled && !hasUpdate) {

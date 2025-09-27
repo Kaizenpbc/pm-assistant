@@ -9,6 +9,7 @@ export interface Project {
     id: string;
     name: string;
     description?: string;
+    category?: string;
     status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
     priority: 'low' | 'medium' | 'high' | 'urgent';
     budgetAllocated?: number;

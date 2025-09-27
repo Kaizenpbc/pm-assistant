@@ -59,9 +59,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   };
 
   const preloadCriticalResources = async () => {
+    // Only preload manifest.json for now
+    // Other resources will be loaded when needed
     const criticalResources = [
-      '/api/v1/projects',
-      '/api/v1/templates',
       '/manifest.json'
     ];
 

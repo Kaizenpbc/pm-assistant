@@ -1,1 +1,1 @@
-{"version":3,"file":"projects.d.ts","sourceRoot":"","sources":["../../../src/server/routes/projects.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,eAAe,EAAgC,MAAM,SAAS,CAAC;AAiBxE,wBAAsB,aAAa,CAAC,OAAO,EAAE,eAAe,iBA4S3D"}
+{"version":3,"file":"projects.d.ts","sourceRoot":"","sources":["../../../src/server/routes/projects.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,eAAe,EAAgC,MAAM,SAAS,CAAC;AAkBxE,wBAAsB,aAAa,CAAC,OAAO,EAAE,eAAe,iBAgT3D"}

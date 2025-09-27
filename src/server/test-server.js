@@ -4,6 +4,9 @@ const cors = require('cors');
 const app = express();
 const PORT = 3001;
 
+// In-memory storage for tasks (in a real app, this would be a database)
+const taskStorage = new Map(); // scheduleId -> array of tasks
+
 // Middleware
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3002'],
@@ -438,10 +441,25 @@ app.get('/api/v1/schedules/:scheduleId/tasks', (req, res) => {
       }
     ];
     
-    res.status(200).json({
-      success: true,
-      tasks: mockTasks
-    });
+    // Get tasks from storage, or return empty array if none exist
+    const tasks = taskStorage.get(scheduleId) || [];
+    
+    // If no tasks are stored, return some default mock tasks for initial setup
+    if (tasks.length === 0) {
+      // Store the default tasks
+      taskStorage.set(scheduleId, mockTasks);
+      
+      res.status(200).json({
+        success: true,
+        tasks: mockTasks
+      });
+    } else {
+      // Return the stored tasks
+      res.status(200).json({
+        success: true,
+        tasks: tasks
+      });
+    }
   } catch (error) {
     console.error('Tasks endpoint error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch tasks' });
@@ -473,6 +491,11 @@ app.post('/api/v1/schedules/:scheduleId/tasks', (req, res) => {
     };
     
     console.log('New task created:', newTask);
+    
+    // Store the new task in our in-memory storage
+    const existingTasks = taskStorage.get(scheduleId) || [];
+    existingTasks.push(newTask);
+    taskStorage.set(scheduleId, existingTasks);
     
     res.status(201).json({
       success: true,
@@ -811,6 +834,57 @@ app.post('/api/v1/ai-scheduling/generate-tasks', (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to generate tasks',
+      error: error.message 
+    });
+  }
+});
+
+// Update an existing task in a schedule
+app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', (req, res) => {
+  try {
+    const { scheduleId, taskId } = req.params;
+    const taskData = req.body;
+    
+    console.log('Updating task:', taskId, 'in schedule:', scheduleId);
+    console.log('Update data:', taskData);
+    
+    // For now, just return success since this is a mock server
+    // In a real implementation, you would update the task in the database
+    const updatedTask = {
+      id: taskId,
+      scheduleId: scheduleId,
+      name: taskData.name || 'Updated Task',
+      description: taskData.description || 'Updated task description',
+      status: taskData.status || 'pending',
+      priority: taskData.priority || 'medium',
+      estimatedHours: taskData.estimatedHours || 8,
+      assignee: taskData.assignee || null,
+      startDate: taskData.startDate || null,
+      endDate: taskData.endDate || null,
+      dependencies: taskData.dependencies || [],
+      updatedAt: new Date().toISOString()
+    };
+    
+    console.log('Task updated:', updatedTask);
+    
+    // Update the task in our in-memory storage
+    const existingTasks = taskStorage.get(scheduleId) || [];
+    const taskIndex = existingTasks.findIndex(task => task.id === taskId);
+    if (taskIndex !== -1) {
+      existingTasks[taskIndex] = updatedTask;
+      taskStorage.set(scheduleId, existingTasks);
+    }
+    
+    res.status(200).json({
+      success: true,
+      task: updatedTask,
+      message: 'Task updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating task:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update task',
       error: error.message 
     });
   }

@@ -1,5 +1,5 @@
 export declare const config: {
-    NODE_ENV: "development" | "production" | "test";
+    NODE_ENV: "test" | "development" | "production";
     PORT: number;
     HOST: string;
     DB_HOST: string;
@@ -11,6 +11,6 @@ export declare const config: {
     JWT_REFRESH_SECRET: string;
     COOKIE_SECRET: string;
     CORS_ORIGIN: string;
-    LOG_LEVEL: "error" | "info" | "warn" | "http" | "verbose" | "debug" | "silly";
+    LOG_LEVEL: "error" | "warn" | "info" | "debug" | "http" | "verbose" | "silly";
 };
 //# sourceMappingURL=config.d.ts.map

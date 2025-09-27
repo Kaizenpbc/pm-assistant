@@ -36,6 +36,13 @@ export const DashboardPage: React.FC = () => {
   const [showCreateProject, setShowCreateProject] = useState(false);
 
   // Handle URL shortcuts and shared content
+  const { data: projectsData, isLoading, error } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => apiService.getProjects(),
+  });
+
+  const projects = projectsData?.projects || [];
+
   useEffect(() => {
     const action = searchParams.get('action');
     const shared = searchParams.get('shared');
@@ -56,11 +63,6 @@ export const DashboardPage: React.FC = () => {
       console.log('Shared content received');
     }
   }, [searchParams, navigate, projectsData]);
-
-  const { data: projectsData, isLoading, error } = useQuery({
-    queryKey: ['projects'],
-    queryFn: () => apiService.getProjects(),
-  });
 
   const handleLogout = async () => {
     try {
@@ -179,8 +181,6 @@ export const DashboardPage: React.FC = () => {
       </div>
     );
   }
-
-  const projects = projectsData?.projects || [];
 
   return (
     <div className="min-h-screen bg-gray-50">

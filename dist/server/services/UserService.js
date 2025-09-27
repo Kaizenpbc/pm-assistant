@@ -7,7 +7,7 @@ class UserService {
             id: '1',
             username: 'admin',
             email: 'admin@example.com',
-            passwordHash: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8QZqK2K',
+            passwordHash: '$2b$12$57JV8D4fZCCQPwL7gmJ6n.ar5spwtsb2aYjgfiKho8C9KJh8bFrcW',
             fullName: 'Administrator',
             role: 'admin',
             isActive: true,

@@ -9,7 +9,7 @@ class ApiService {
     api;
     constructor() {
         this.api = axios_1.default.create({
-            baseURL: '/api/v1',
+            baseURL: 'http://localhost:3001/api/v1',
             withCredentials: true,
             headers: {
                 'Content-Type': 'application/json',
@@ -24,7 +24,7 @@ class ApiService {
             return response;
         }, async (error) => {
             const originalRequest = error.config;
-            if (error.response?.status === 401 && !originalRequest._retry) {
+            if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh')) {
                 originalRequest._retry = true;
                 try {
                     await this.api.post('/auth/refresh');
@@ -72,6 +72,54 @@ class ApiService {
     }
     async deleteProject(id) {
         const response = await this.api.delete(`/projects/${id}`);
+        return response.data;
+    }
+    async getSchedules(projectId) {
+        const response = await this.api.get(`/schedules/project/${projectId}`);
+        return response.data;
+    }
+    async createSchedule(scheduleData) {
+        const response = await this.api.post('/schedules', scheduleData);
+        return response.data;
+    }
+    async updateSchedule(scheduleId, scheduleData) {
+        const response = await this.api.put(`/schedules/${scheduleId}`, scheduleData);
+        return response.data;
+    }
+    async getTasks(scheduleId) {
+        const response = await this.api.get(`/schedules/${scheduleId}/tasks`);
+        return response.data;
+    }
+    async createTask(scheduleId, taskData) {
+        const response = await this.api.post(`/schedules/${scheduleId}/tasks`, taskData);
+        return response.data;
+    }
+    async updateTask(scheduleId, taskId, taskData) {
+        const response = await this.api.put(`/schedules/${scheduleId}/tasks/${taskId}`, taskData);
+        return response.data;
+    }
+    async analyzeProject(projectData) {
+        const response = await this.api.post('/ai-scheduling/analyze-project', projectData);
+        return response.data;
+    }
+    async suggestDependencies(taskData) {
+        const response = await this.api.post('/ai-scheduling/suggest-dependencies', taskData);
+        return response.data;
+    }
+    async optimizeSchedule(optimizationData) {
+        const response = await this.api.post('/ai-scheduling/optimize-schedule', optimizationData);
+        return response.data;
+    }
+    async getProjectInsights(projectId) {
+        const response = await this.api.get(`/ai-scheduling/insights/${projectId}`);
+        return response.data;
+    }
+    async getProjectHealth(projectId) {
+        const response = await this.api.get(`/health/${projectId}`);
+        return response.data;
+    }
+    async calculateHealthScore(healthData) {
+        const response = await this.api.post('/health/calculate', healthData);
         return response.data;
     }
 }

@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pwaService = void 0;
 class PWAService {
@@ -11,6 +44,7 @@ class PWAService {
         this.initialize();
     }
     async initialize() {
+        await this.requestNotificationPermission();
         this.isInstalled = this.checkIfInstalled();
         window.addEventListener('beforeinstallprompt', this.handleInstallPrompt.bind(this));
         window.addEventListener('appinstalled', this.handleAppInstalled.bind(this));
@@ -51,14 +85,39 @@ class PWAService {
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                this.registration = await navigator.serviceWorker.register('/sw.js');
+                const { pathService } = await Promise.resolve().then(() => __importStar(require('./pathService')));
+                const swPath = pathService.getServiceWorkerPath();
+                this.registration = await navigator.serviceWorker.register(swPath);
                 console.log('✅ Service Worker registered successfully');
+                await this.showNotification('PM Assistant Ready', {
+                    body: 'App is now available offline with enhanced features.',
+                    tag: 'pwa-registration-success'
+                });
+                const { toastService } = await Promise.resolve().then(() => __importStar(require('./toastService')));
+                toastService.pwaRegistrationSuccess();
                 this.registration.addEventListener('updatefound', this.handleServiceWorkerUpdate.bind(this));
                 setInterval(() => this.checkForUpdates(), 30 * 60 * 1000);
             }
             catch (error) {
                 console.error('❌ Service Worker registration failed:', error);
+                await this.showNotification('Offline Features Unavailable', {
+                    body: 'Unable to enable offline capabilities. Some features may be limited. Please check your internet connection and try refreshing the page.',
+                    tag: 'pwa-registration-error',
+                    requireInteraction: true
+                });
+                const { toastService } = await Promise.resolve().then(() => __importStar(require('./toastService')));
+                toastService.pwaRegistrationError();
+                console.warn('⚠️ PWA offline capabilities disabled. This may affect app performance and user experience.');
             }
+        }
+        else {
+            console.warn('⚠️ Service Workers not supported in this browser');
+            await this.showNotification('Browser Compatibility Notice', {
+                body: 'Your browser does not support offline features. Please consider updating to a modern browser for the best experience.',
+                tag: 'pwa-unsupported-browser'
+            });
+            const { toastService } = await Promise.resolve().then(() => __importStar(require('./toastService')));
+            toastService.pwaUnsupportedBrowser();
         }
     }
     handleServiceWorkerUpdate() {
@@ -200,9 +259,10 @@ class PWAService {
     }
     async showNotification(title, options) {
         if (Notification.permission === 'granted') {
+            const { pathService } = await Promise.resolve().then(() => __importStar(require('./pathService')));
             const notification = new Notification(title, {
-                icon: '/icon-192x192.png',
-                badge: '/badge-72x72.png',
+                icon: pathService.getIconPath('192x192'),
+                badge: pathService.resolve('/badge-72x72.png'),
                 ...options
             });
             notification.onclick = () => {

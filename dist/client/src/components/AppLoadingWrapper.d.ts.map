@@ -1,0 +1,1 @@
+{"version":3,"file":"AppLoadingWrapper.d.ts","sourceRoot":"","sources":["../../../../src/client/src/components/AppLoadingWrapper.tsx"],"names":[],"mappings":"AAAA,OAAO,KAA8B,MAAM,OAAO,CAAC;AAInD,UAAU,sBAAsB;IAC9B,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;IAC1B,eAAe,CAAC,EAAE,MAAM,CAAC;CAC1B;AAED,eAAO,MAAM,iBAAiB,EAAE,KAAK,CAAC,EAAE,CAAC,sBAAsB,CAsF9D,CAAC;AAEF,eAAe,iBAAiB,CAAC"}
