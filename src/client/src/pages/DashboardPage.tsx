@@ -54,9 +54,7 @@ export const DashboardPage: React.FC = () => {
   const { data: projectsData, isLoading, error, refetch } = useQuery({
     queryKey: ['projects'],
     queryFn: () => apiService.getProjects(),
-    retry: 1,
-    retryDelay: 1000,
-    staleTime: 30000, // 30 seconds
+    // Use global configuration - no need to override staleTime
   });
 
   const projects = projectsData?.projects || [];

@@ -144,6 +144,11 @@ class ApiService {
     return response.data;
   }
 
+  async deleteSchedule(scheduleId: string) {
+    const response = await this.api.delete(`/schedules/${scheduleId}`);
+    return response.data;
+  }
+
   // Task endpoints
   async getTasks(scheduleId: string) {
     const response = await this.api.get(`/schedules/${scheduleId}/tasks`);

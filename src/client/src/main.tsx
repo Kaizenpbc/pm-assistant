@@ -7,12 +7,16 @@ import './index.css';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 10, // 10 minutes - data stays fresh longer
+      cacheTime: 1000 * 60 * 15, // 15 minutes - keep in cache longer
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchOnMount: false, // Don't refetch on component mount if data is fresh
+      refetchOnReconnect: true, // Only refetch when network reconnects
       retry: (failureCount, error: any) => {
         if (error?.response?.status === 401) {
           return false; // Don't retry on auth errors
         }
-        return failureCount < 3;
+        return failureCount < 2; // Reduce retry attempts
       },
     },
   },

@@ -13,9 +13,11 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    open: true, // Automatically open browser
     hmr: {
       port: 3000,
       host: 'localhost',
+      overlay: true, // Show error overlays
     },
     watch: {
       usePolling: true,
@@ -23,7 +25,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3002', // Fixed: backend is on 3002
         changeOrigin: true,
         secure: false,
       },

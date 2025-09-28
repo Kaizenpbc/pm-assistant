@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { 
   ArrowLeft, 
   Plus, 
@@ -10,7 +11,8 @@ import {
   Loader2,
   X,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Edit3
 } from 'lucide-react';
 import ProjectPlanningTemplates from '../components/ProjectPlanningTemplates';
 import { AITaskBreakdown } from '../components/AITaskBreakdown';
@@ -80,6 +82,145 @@ interface ProjectSchedule {
   templateName?: string;
 }
 
+interface EditScheduleFormProps {
+  schedule: ProjectSchedule;
+  onSave: (updatedSchedule: ProjectSchedule) => void;
+  onCancel: () => void;
+}
+
+const EditScheduleForm: React.FC<EditScheduleFormProps> = ({ schedule, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    name: schedule.name || 'Project Schedule',
+    description: schedule.description || 'Auto-generated schedule',
+    start_date: schedule.start_date ? schedule.start_date.split('T')[0] : '',
+    end_date: schedule.end_date ? schedule.end_date.split('T')[0] : '',
+    status: schedule.status || 'planned'
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const updatedSchedule: ProjectSchedule = {
+      ...schedule,
+      name: formData.name,
+      description: formData.description,
+      start_date: formData.start_date ? new Date(formData.start_date).toISOString() : schedule.start_date,
+      end_date: formData.end_date ? new Date(formData.end_date).toISOString() : schedule.end_date,
+      status: formData.status as any,
+      updated_at: new Date().toISOString()
+    };
+    
+    onSave(updatedSchedule);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+          Schedule Name
+        </label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Enter schedule name"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+          Description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Enter schedule description"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
+            Start Date
+          </label>
+          <input
+            type="date"
+            id="start_date"
+            name="start_date"
+            value={formData.start_date}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">
+            End Date
+          </label>
+          <input
+            type="date"
+            id="end_date"
+            name="end_date"
+            value={formData.end_date}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+          Status
+        </label>
+        <select
+          id="status"
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="planned">Planned</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Save Changes
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const SchedulePage: React.FC = () => {
   const { projectId, id } = useParams<{ projectId?: string; id?: string }>();
   const actualProjectId = projectId || id;
@@ -98,9 +239,10 @@ const SchedulePage: React.FC = () => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showErrorMessage, setShowErrorMessage] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [showAIBreakdown, setShowAIBreakdown] = useState(false);
-  const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // No mock project data - clean development environment
@@ -110,115 +252,95 @@ const SchedulePage: React.FC = () => {
 
   // Clean development environment - no mock data
 
+  // Load project data using React Query (cached)
+  const { data: projectData } = useQuery({
+    queryKey: ['project', actualProjectId],
+    queryFn: () => apiService.getProject(actualProjectId!),
+    enabled: !!actualProjectId,
+    select: (data) => data.project,
+  });
+
+  // Load schedules data using React Query (cached)
+  const { data: schedulesData, isLoading: isLoadingSchedules } = useQuery({
+    queryKey: ['schedules', actualProjectId],
+    queryFn: () => apiService.getSchedules(actualProjectId!),
+    enabled: !!actualProjectId,
+    select: (data) => data.schedules || [],
+  });
+
+  // Update project state when data loads
   useEffect(() => {
-    // Load project data from API
-    const loadProjectData = async () => {
-      if (!actualProjectId) return;
+    if (projectData) {
+      setProject(projectData);
+    } else if (actualProjectId) {
+      // Fallback project object
+      setProject({
+        id: actualProjectId,
+        code: 'PROJECT',
+        name: 'Project',
+        description: 'Project description',
+        status: 'active',
+        priority: 'medium',
+        category: 'general'
+      });
+    }
+  }, [projectData, actualProjectId]);
+
+  // Handle schedule selection
+  useEffect(() => {
+    if (!schedulesData || schedulesData.length === 0) {
+      setCurrentSchedule(null);
+      setIsLoadingSchedule(false); // No schedules means no loading needed
+      return;
+    }
+
+    // Use the first schedule (simplified)
+    const scheduleToUse = schedulesData[0];
+    setCurrentSchedule(scheduleToUse);
+  }, [schedulesData]);
+
+  // Load tasks data using React Query (cached)
+  const { data: tasksData, isLoading: isLoadingTasks } = useQuery({
+    queryKey: ['tasks', currentSchedule?.id],
+    queryFn: () => apiService.getTasks(currentSchedule!.id),
+    enabled: !!currentSchedule?.id,
+    select: (data) => data.tasks || [],
+  });
+
+  // Update tasks state when data loads
+  useEffect(() => {
+    if (tasksData) {
+      setScheduleTasks(tasksData);
       
-      try {
-        const projectResponse = await apiService.getProject(actualProjectId);
-        setProject(projectResponse.project);
-      } catch (error) {
-        console.error('Failed to load project:', error);
-        // Create a minimal project object for display
-        setProject({
-          id: actualProjectId,
-          code: 'PROJECT',
-          name: 'Project',
-          description: 'Project description',
-          status: 'active',
-          priority: 'medium',
-          category: 'general'
-        });
-      }
-    };
-    
-    // Load schedule data from database
-    const loadScheduleData = async () => {
-      if (!actualProjectId) return;
-      
-      setIsLoadingSchedule(true);
-      setLoadError(null);
-      
-      try {
-        console.log('=== LOADING SCHEDULE FROM DATABASE ===');
-        console.log('Project ID:', actualProjectId);
-        
-        const schedulesResponse = await apiService.getSchedules(actualProjectId);
-        console.log('Schedules response:', schedulesResponse);
-        
-        if (schedulesResponse.schedules && schedulesResponse.schedules.length > 0) {
-          // Find the schedule with the most tasks, or use the first one
-          let scheduleToUse = schedulesResponse.schedules[0];
-          let maxTasks = 0;
-          
-          // Check each schedule to find the one with most tasks
-          for (const schedule of schedulesResponse.schedules) {
-            try {
-              const tasksResponse = await apiService.getTasks(schedule.id);
-              const taskCount = tasksResponse.tasks ? tasksResponse.tasks.length : 0;
-              
-              if (taskCount > maxTasks) {
-                maxTasks = taskCount;
-                scheduleToUse = schedule;
-              }
-            } catch (error) {
-              console.warn(`Could not load tasks for schedule ${schedule.id}:`, error);
-            }
+      // Build task hierarchy
+      const hierarchy: Record<string, ScheduleTask[]> = {};
+      tasksData.forEach((task: ScheduleTask) => {
+        if (task.parent_task_id) {
+          if (!hierarchy[task.parent_task_id]) {
+            hierarchy[task.parent_task_id] = [];
           }
-          
-          console.log(`Selected schedule ${scheduleToUse.id} with ${maxTasks} tasks`);
-          setCurrentSchedule(scheduleToUse);
-          
-          // Load tasks for this schedule
-          const tasksResponse = await apiService.getTasks(scheduleToUse.id);
-          console.log('Tasks response:', tasksResponse);
-          
-          if (tasksResponse.tasks && tasksResponse.tasks.length > 0) {
-            setScheduleTasks(tasksResponse.tasks);
-            
-            // Build task hierarchy
-            const hierarchy: Record<string, ScheduleTask[]> = {};
-            tasksResponse.tasks.forEach((task: ScheduleTask) => {
-              if (task.parent_task_id) {
-                if (!hierarchy[task.parent_task_id]) {
-                  hierarchy[task.parent_task_id] = [];
-                }
-                hierarchy[task.parent_task_id].push(task);
-              }
-            });
-            setTaskHierarchy(hierarchy);
-          } else {
-            setScheduleTasks([]);
-            setTaskHierarchy({});
-          }
-          
-          console.log('Loaded schedule from database:', scheduleToUse.name);
-        } else {
-          console.log('No schedules found, showing blank schedule');
-          setCurrentSchedule(null);
-          setScheduleTasks([]);
-          setTaskHierarchy({});
+          hierarchy[task.parent_task_id].push(task);
         }
-        
-        // Set loading to false after processing schedules
-        console.log('🔄 Setting isLoadingSchedule to false (success path)');
-        setIsLoadingSchedule(false);
-      } catch (error) {
-        console.error('❌ Error loading schedule data:', error);
-        setLoadError('Failed to load schedule data. Please try again.');
-        // Fallback to blank schedule on error
-        setCurrentSchedule(null);
-        setScheduleTasks([]);
-        setTaskHierarchy({});
-        setIsLoadingSchedule(false);
-      }
-    };
-    
-    // Load both project and schedule data
-    loadProjectData();
-    loadScheduleData();
-  }, [actualProjectId]);
+      });
+      setTaskHierarchy(hierarchy);
+      setIsLoadingSchedule(false);
+    } else if (currentSchedule) {
+      setScheduleTasks([]);
+      setTaskHierarchy({});
+      setIsLoadingSchedule(false);
+    }
+  }, [tasksData, currentSchedule]);
+
+  // Update loading state based on schedules and tasks loading
+  useEffect(() => {
+    if (isLoadingSchedules) {
+      setIsLoadingSchedule(true);
+    } else if (!schedulesData || schedulesData.length === 0) {
+      setIsLoadingSchedule(false); // No schedules to load
+    } else if (currentSchedule) {
+      setIsLoadingSchedule(isLoadingTasks);
+    }
+  }, [isLoadingSchedules, schedulesData, isLoadingTasks, currentSchedule]);
 
   // Initialize editable states with current task data
   useEffect(() => {
@@ -517,6 +639,10 @@ const SchedulePage: React.FC = () => {
       
       if (!currentSchedule) {
         // Check if there are any existing schedules for this project first
+        if (!project?.id) {
+          console.error('Cannot save schedule: project ID is missing');
+          return;
+        }
         const existingSchedules = await apiService.getSchedules(project.id);
         
         if (existingSchedules.schedules && existingSchedules.schedules.length > 0) {
@@ -544,7 +670,7 @@ const SchedulePage: React.FC = () => {
         } else {
           // Create new schedule only if none exist
       const scheduleData = {
-        projectId: project.id,
+        projectId: project?.id,
             name: 'Project Schedule',
             description: 'Auto-generated schedule',
             startDate: new Date().toISOString().split('T')[0],
@@ -561,7 +687,7 @@ const SchedulePage: React.FC = () => {
       } else if (currentSchedule.id === 'default-schedule') {
         // Create new schedule in database
         const scheduleData = {
-          projectId: project.id,
+          projectId: project?.id,
           name: currentSchedule.name,
           description: currentSchedule.description,
           startDate: currentSchedule.start_date,
@@ -683,15 +809,31 @@ const SchedulePage: React.FC = () => {
     setShowTemplates(true);
   };
 
-  const handleClearSchedule = () => {
+  const handleClearSchedule = async () => {
     if (!confirm('Are you sure you want to clear the current schedule? This will delete all phases and tasks.')) {
       return;
     }
     
-    setScheduleTasks([]);
-    setTaskHierarchy({});
-    setHasUnsavedChanges(true); // Mark as having unsaved changes so user can save the empty state
-    console.log('Schedule cleared');
+    if (!currentSchedule?.id) {
+      console.log('No schedule to clear');
+      return;
+    }
+    
+    try {
+      console.log('Deleting schedule from database:', currentSchedule.id);
+      await apiService.deleteSchedule(currentSchedule.id);
+      
+      // Clear frontend state
+      setScheduleTasks([]);
+      setTaskHierarchy({});
+      setCurrentSchedule(null);
+      setHasUnsavedChanges(false); // No unsaved changes since we deleted everything
+      
+      console.log('✅ Schedule deleted successfully from database');
+    } catch (error) {
+      console.error('Failed to delete schedule:', error);
+      alert('Failed to delete schedule. Please try again.');
+    }
   };
 
   const handleTemplateSelection = (templateData: any) => {
@@ -823,16 +965,14 @@ const SchedulePage: React.FC = () => {
   };
 
 
-  // Project loading is handled in useEffect, no need for early return
-
-  // Show loading state while loading schedule
-  if (isLoadingSchedule) {
+  // Show loading state while loading project or schedule data
+  if (!project || isLoadingSchedule) {
     console.log('🔄 SchedulePage: Still loading, showing spinner');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Loading schedule data...</p>
+          <p>{!project ? 'Loading project data...' : 'Loading schedule data...'}</p>
         </div>
       </div>
     );
@@ -875,10 +1015,10 @@ const SchedulePage: React.FC = () => {
               <div className="h-6 w-px bg-gray-300" />
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">
-                  {project.name} - Schedule
+                  {project?.name || 'Loading...'} - Schedule
                 </h1>
                 <p className="text-sm text-gray-500">
-                  {project.code} • {project.category}
+                  {project?.code || ''} • {project?.category || ''}
                 </p>
               </div>
             </div>
@@ -945,6 +1085,14 @@ const SchedulePage: React.FC = () => {
               >
                 <Plus className="h-4 w-4" />
                 Add Phases
+              </button>
+              <button 
+                onClick={() => setShowEditModal(true)}
+                disabled={!currentSchedule}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Edit3 className="h-4 w-4" />
+                Edit Schedule
               </button>
               <button 
                 onClick={handleClearSchedule}
@@ -1263,6 +1411,34 @@ const SchedulePage: React.FC = () => {
                     projectName={project?.name || ''}
                     projectCode={project?.code || ''}
                     projectStatus={project?.status || ''}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Schedule Modal */}
+          {showEditModal && currentSchedule && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">Edit Schedule Details</h3>
+                  <button
+                    onClick={() => setShowEditModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                <div className="p-4">
+                  <EditScheduleForm
+                    schedule={currentSchedule}
+                    onSave={(updatedSchedule) => {
+                      setCurrentSchedule(updatedSchedule);
+                      setShowEditModal(false);
+                      setHasUnsavedChanges(true);
+                    }}
+                    onCancel={() => setShowEditModal(false)}
                   />
                 </div>
               </div>

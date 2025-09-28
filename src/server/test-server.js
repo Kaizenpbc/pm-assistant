@@ -775,6 +775,7 @@ app.post('/api/v1/schedules/:scheduleId/tasks', async (req, res) => {
       risks: taskData.risks || null,
       issues: taskData.issues || null,
       comments: taskData.comments || null,
+      parent_task_id: taskData.parentTaskId || taskData.parent_task_id || null,
       
       // Metadata
       created_by: 'user-001', // Default user
@@ -791,8 +792,8 @@ app.post('/api/v1/schedules/:scheduleId/tasks', async (req, res) => {
         id, schedule_id, name, description, status, priority,
         estimated_days, estimated_hours, estimated_value, estimated_unit,
         assigned_to, assignee, due_date, start_date, end_date,
-        work_effort, dependency, risks, issues, comments, created_by, dependencies
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        work_effort, dependency, risks, issues, comments, parent_task_id, created_by, dependencies
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         newTask.id,
         newTask.schedule_id,
@@ -814,6 +815,7 @@ app.post('/api/v1/schedules/:scheduleId/tasks', async (req, res) => {
         newTask.risks,
         newTask.issues,
         newTask.comments,
+        newTask.parent_task_id,
         newTask.created_by,
         JSON.stringify(newTask.dependencies)
       ]
@@ -947,6 +949,7 @@ app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
       risks: taskData.risks || null,
       issues: taskData.issues || null,
       comments: taskData.comments || null,
+      parent_task_id: taskData.parentTaskId || taskData.parent_task_id || null,
       
       // Metadata
       updated_at: new Date().toISOString(),
@@ -967,7 +970,7 @@ app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
         estimated_days = ?, estimated_hours = ?, estimated_value = ?, estimated_unit = ?,
         assigned_to = ?, assignee = ?, due_date = ?, start_date = ?, end_date = ?,
         work_effort = ?, dependency = ?, risks = ?, issues = ?, comments = ?,
-        dependencies = ?, updated_at = NOW()
+        parent_task_id = ?, dependencies = ?, updated_at = NOW()
       WHERE id = ? AND schedule_id = ?`,
       [
         updatedTask.name,
@@ -988,6 +991,7 @@ app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
         updatedTask.risks,
         updatedTask.issues,
         updatedTask.comments,
+        updatedTask.parent_task_id,
         JSON.stringify(updatedTask.dependencies),
         taskId,
         scheduleId
