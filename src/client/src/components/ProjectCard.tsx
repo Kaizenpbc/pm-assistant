@@ -1,12 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Project } from '../types';
+import { apiService } from '../services/api';
 
 interface ProjectCardProps {
   project: Project;
+  onProjectDeleted?: () => void;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onProjectDeleted }) => {
   const navigate = useNavigate();
 
   const getStatusColor = (status: string) => {
@@ -45,6 +47,25 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
     navigate(`/project/${project.id}`);
   };
 
+  const handleViewProject = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/project/${project.id}`);
+  };
+
+  const handleDeleteProject = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (window.confirm(`Are you sure you want to delete the project "${project.name}"? This action cannot be undone.`)) {
+      try {
+        await apiService.deleteProject(project.id);
+        onProjectDeleted?.();
+      } catch (error) {
+        console.error('Failed to delete project:', error);
+        alert('Failed to delete project. Please try again.');
+      }
+    }
+  };
+
   return (
     <div
       className="card hover:shadow-md transition-shadow duration-200 cursor-pointer"
@@ -61,6 +82,29 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
                 {project.description}
               </p>
             )}
+          </div>
+        </div>
+        
+        {/* Project Code and Action Buttons */}
+        <div className="flex items-center justify-between mt-4 mb-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded text-gray-700">
+              {project.code || `ID: ${project.id}`}
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleViewProject}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium"
+            >
+              View
+            </button>
+            <button
+              onClick={handleDeleteProject}
+              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium"
+            >
+              Delete
+            </button>
           </div>
         </div>
       </div>

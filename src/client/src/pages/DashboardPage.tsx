@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
@@ -7,6 +8,7 @@ import { ProjectCard } from '../components/ProjectCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { AIAssistant } from '../components/AIAssistant';
 import ProjectCreationModal from '../components/ProjectCreationModal';
+import ProjectEditModal from '../components/ProjectEditModal';
 import { 
   ExternalLink,
   BarChart3,
@@ -27,6 +29,8 @@ import {
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  
+  
   const [searchParams] = useSearchParams();
   const [aiAssistant, setAIAssistant] = useState<{
     isOpen: boolean;
@@ -34,14 +38,39 @@ export const DashboardPage: React.FC = () => {
   }>({ isOpen: false, type: 'chat' });
   
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [showEditProject, setShowEditProject] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  
+  // Debug initial state
+  console.log('🏠 DashboardPage: Component rendered');
+  console.log('📊 DashboardPage: Initial showCreateProject state:', showCreateProject);
+  
+  // Add visible debug element
+  if (showCreateProject) {
+    console.log('🎨 MODAL SHOULD BE VISIBLE NOW!');
+  }
 
   // Handle URL shortcuts and shared content
-  const { data: projectsData, isLoading, error } = useQuery({
+  const { data: projectsData, isLoading, error, refetch } = useQuery({
     queryKey: ['projects'],
     queryFn: () => apiService.getProjects(),
+    retry: 1,
+    retryDelay: 1000,
+    staleTime: 30000, // 30 seconds
   });
 
   const projects = projectsData?.projects || [];
+
+  // Debug logging (temporary)
+  if (isLoading) {
+    console.log('🔄 Dashboard is loading projects...');
+  }
+  if (error) {
+    console.error('❌ Dashboard error:', error);
+  }
+  if (projectsData) {
+    console.log('✅ Dashboard received projects:', projects.length);
+  }
 
   useEffect(() => {
     const action = searchParams.get('action');
@@ -68,9 +97,37 @@ export const DashboardPage: React.FC = () => {
     try {
       await apiService.logout();
       logout();
+      // Navigate to login page for complete logout
+      navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
       logout(); // Logout locally even if API call fails
+      // Navigate to login page even if API call fails
+      navigate('/login');
+    }
+  };
+
+  const handleEditProject = (project: any) => {
+    console.log('✏️ Editing project:', project);
+    setEditingProject(project);
+    setShowEditProject(true);
+  };
+
+  const handleUpdateProject = async (updatedProjectData: any) => {
+    try {
+      console.log('🔄 Updating project:', editingProject?.id, updatedProjectData);
+      await apiService.updateProject(editingProject?.id, updatedProjectData);
+      setShowEditProject(false);
+      setEditingProject(null);
+      
+      // Properly refresh the projects list using React Query
+      if (refetch) {
+        await refetch();
+        console.log('✅ Projects list refreshed after update');
+      }
+    } catch (error) {
+      console.error('Error updating project:', error);
+      alert('Failed to update project. Please try again.');
     }
   };
 
@@ -155,8 +212,15 @@ export const DashboardPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center">
         <LoadingSpinner size="lg" />
+        <p className="mt-4 text-gray-600">Loading projects...</p>
+        <button 
+          onClick={() => refetch()} 
+          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -184,110 +248,125 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* DEBUG ELEMENT - REMOVE AFTER TESTING */}
+      
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-lg">📊</span>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  🚀 PROJECT MANAGER DASHBOARD - CHANGED! 🚀
-                </h1>
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          {/* Title Row */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">📊</span>
               </div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Project Management Dashboard
+              </h1>
             </div>
             
+            {/* User Info and Logout */}
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setShowCreateProject(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Project
-              </button>
-              <button
-                onClick={handlePortfolioAnalysis}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <BarChart3 className="h-4 w-4 mr-2" />
-                🔍 Portfolio Analysis
-              </button>
-              <button
-                onClick={handleAdvancedAnalytics}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <Brain className="h-4 w-4 mr-2" />
-                📊 Advanced Analytics
-              </button>
-              <button
-                onClick={handleProjectHealth}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <Target className="h-4 w-4 mr-2" />
-                🏥 Project Health
-              </button>
-              <button
-                onClick={handleResourceAllocation}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                👥 Resource Allocation
-              </button>
-              <button
-                onClick={handleRiskTrends}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <TrendingUp className="h-4 w-4 mr-2" />
-                📈 Risk Trends
-              </button>
-              <button
-                onClick={handleDeadlines}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <Clock className="h-4 w-4 mr-2" />
-                ⏰ Deadlines
-              </button>
-              <button
-                onClick={handleEscalations}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                🚨 Escalations
-              </button>
-              <button
-                onClick={handleApprovals}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                ✅ Approvals
-              </button>
-              <button
-                onClick={handleSmartAlerts}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <Bell className="h-4 w-4 mr-2" />
-                🔔 Smart Alerts
-              </button>
-              <button
-                onClick={handleAITasks}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
-              >
-                <User className="h-4 w-4 mr-2" />
-                🤖 AI Tasks
-              </button>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>
-                <p className="text-xs text-gray-500">{user?.role?.toUpperCase()}</p>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.fullName || user?.username || 'Unknown User'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {user?.role?.toUpperCase() || 'USER'} • {user?.username || 'N/A'}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="btn btn-danger"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-colors"
               >
                 Logout
               </button>
             </div>
+          </div>
+
+          {/* Action Buttons Row */}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setShowCreateProject(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md"
+              type="button"
+            >
+              ➕ Create New Project
+            </button>
+            <button
+              onClick={handlePortfolioAnalysis}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Portfolio Analysis
+            </button>
+            <button
+              onClick={handleAdvancedAnalytics}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <Brain className="h-4 w-4 mr-2" />
+              Advanced Analytics
+            </button>
+            <button
+              onClick={handleProjectHealth}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <Target className="h-4 w-4 mr-2" />
+              Project Health
+            </button>
+            <button
+              onClick={handleResourceAllocation}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Resource Allocation
+            </button>
+            <button
+              onClick={handleRiskTrends}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Risk Trends
+            </button>
+            <button
+              onClick={handleDeadlines}
+              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Deadlines
+            </button>
+            <button
+              onClick={handleEscalations}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Escalations
+            </button>
+            <button
+              onClick={handleApprovals}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Approvals
+            </button>
+            <button
+              onClick={handleSmartAlerts}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <Bell className="h-4 w-4 mr-2" />
+              Smart Alerts
+            </button>
+            <button
+              onClick={handleAITasks}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-md"
+            >
+              <User className="h-4 w-4 mr-2" />
+              AI Tasks
+            </button>
           </div>
         </div>
       </header>
@@ -378,8 +457,9 @@ export const DashboardPage: React.FC = () => {
               <table className="min-w-full">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="sticky left-0 z-10 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-r border-gray-200 min-w-[120px]">Project Code</th>
-                    <th className="sticky left-[120px] z-10 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-r border-gray-200 min-w-[200px]">Project Name</th>
+                    <th className="sticky left-0 z-10 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-r border-gray-200 min-w-[200px]">Actions & Code</th>
+                    <th className="sticky left-[200px] z-10 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-r border-gray-200 min-w-[200px]">Project Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Base Start</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Base Finish</th>
@@ -393,7 +473,6 @@ export const DashboardPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue Escalation</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decision Tracking</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action Priority</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Project</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Schedule</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link to Issues</th>
                   </tr>
@@ -424,12 +503,84 @@ export const DashboardPage: React.FC = () => {
                           className="hover:bg-gray-50 cursor-pointer transition-colors"
                           onClick={() => handleProjectClick(project)}
                         >
-                          <td className="sticky left-0 z-10 px-6 py-4 whitespace-nowrap bg-white border-r border-gray-200 min-w-[120px]">
+                          <td className="sticky left-0 z-10 px-6 py-4 whitespace-nowrap bg-white border-r border-gray-200 min-w-[200px]">
+                            {/* Action Buttons - SUPER VISIBLE */}
+                            <div className="flex items-center space-x-2 mb-2" style={{ backgroundColor: 'yellow', padding: '5px', border: '2px solid red' }}>
+                              <button 
+                                style={{ 
+                                  backgroundColor: 'lime', 
+                                  color: 'black', 
+                                  padding: '5px 10px', 
+                                  border: '2px solid green',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold'
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `/project/${project.id}`;
+                                }}
+                              >
+                                👁️ VIEW
+                              </button>
+                              <button 
+                                style={{ 
+                                  backgroundColor: 'blue', 
+                                  color: 'white', 
+                                  padding: '5px 10px', 
+                                  border: '2px solid darkblue',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold'
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditProject(project);
+                                }}
+                              >
+                                ✏️ EDIT
+                              </button>
+                              <button 
+                                style={{ 
+                                  backgroundColor: 'red', 
+                                  color: 'white', 
+                                  padding: '5px 10px', 
+                                  border: '2px solid darkred',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold'
+                                }}
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Are you sure you want to delete the project "${project.name}"? This action cannot be undone.`)) {
+                                    try {
+                                      await apiService.deleteProject(project.id);
+                                      
+                                      // Properly refresh the projects list using React Query
+                                      if (refetch) {
+                                        await refetch();
+                                        console.log('✅ Projects list refreshed after deletion');
+                                      }
+                                    } catch (error) {
+                                      console.error('Failed to delete project:', error);
+                                      alert('Failed to delete project. Please try again.');
+                                    }
+                                  }
+                                }}
+                              >
+                                🗑️ DELETE
+                              </button>
+                            </div>
+                            {/* Project Code */}
                             <div className="text-sm font-medium text-blue-600">{project.code || 'No Code'}</div>
                             <div className="text-xs text-gray-500">ID: {project.id}</div>
                           </td>
-                          <td className="sticky left-[120px] z-10 px-6 py-4 whitespace-nowrap bg-white border-r border-gray-200 min-w-[200px]">
+                          <td className="sticky left-[200px] z-10 px-6 py-4 whitespace-nowrap bg-white border-r border-gray-200 min-w-[200px]">
                             <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {project.created_by || 'Unknown'}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-900 max-w-xs truncate">{project.description}</div>
@@ -533,18 +684,6 @@ export const DashboardPage: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <button 
-                              className="text-green-600 hover:text-green-800 hover:underline border border-green-300 px-3 py-1 rounded-md flex items-center"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.location.href = `/project/${project.id}`;
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              View Project
-                            </button>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <button 
                               className="text-blue-600 hover:text-blue-800 hover:underline border border-blue-300 px-3 py-1 rounded-md flex items-center"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -601,15 +740,60 @@ export const DashboardPage: React.FC = () => {
       )}
 
       {/* Project Creation Modal */}
-      <ProjectCreationModal
-        isOpen={showCreateProject}
-        onClose={() => setShowCreateProject(false)}
-        onCreateProject={(projectData) => {
-          console.log('Creating new project:', projectData);
-          // TODO: Implement project creation API call
-          setShowCreateProject(false);
-        }}
-      />
+      {showCreateProject && (
+        <>
+          {console.log('🚀 DashboardPage: Rendering ProjectCreationModal')}
+          {console.log('📊 DashboardPage: showCreateProject =', showCreateProject)}
+          <ProjectCreationModal
+            isOpen={showCreateProject}
+            onClose={() => {
+              console.log('🔒 DashboardPage: Closing modal');
+              setShowCreateProject(false);
+            }}
+            onCreateProject={async (projectData) => {
+              try {
+                console.log('🎯 DashboardPage: onCreateProject called');
+                console.log('📝 DashboardPage: Project data:', projectData);
+                
+                // Call the API to create the project
+                const response = await apiService.createProject(projectData);
+                
+                if (response.success) {
+                  console.log('✅ DashboardPage: Project created successfully:', response.project);
+                  
+                  // Properly refresh the projects list using React Query
+                  if (refetch) {
+                    await refetch();
+                    console.log('✅ Projects list refreshed after creation');
+                  }
+                } else {
+                  console.error('❌ DashboardPage: Failed to create project:', response.message);
+                  alert('Failed to create project: ' + response.message);
+                }
+              } catch (error) {
+                console.error('💥 DashboardPage: Error creating project:', error);
+                alert('Error creating project: ' + error.message);
+              } finally {
+                console.log('🔚 DashboardPage: Closing modal after project creation');
+                setShowCreateProject(false);
+              }
+            }}
+          />
+        </>
+      )}
+
+      {/* Project Edit Modal */}
+      {showEditProject && editingProject && (
+        <ProjectEditModal
+          isOpen={showEditProject}
+          project={editingProject}
+          onClose={() => {
+            setShowEditProject(false);
+            setEditingProject(null);
+          }}
+          onUpdate={handleUpdateProject}
+        />
+      )}
     </div>
   );
 };

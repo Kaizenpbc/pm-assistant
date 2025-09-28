@@ -1,1 +1,0 @@
-{"version":3,"file":"ProjectCard.d.ts","sourceRoot":"","sources":["../../../../src/client/src/components/ProjectCard.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAE1B,OAAO,EAAE,OAAO,EAAE,MAAM,UAAU,CAAC;AAEnC,UAAU,gBAAgB;IACxB,OAAO,EAAE,OAAO,CAAC;CAClB;AAED,eAAO,MAAM,WAAW,EAAE,KAAK,CAAC,EAAE,CAAC,gBAAgB,CAuGlD,CAAC"}

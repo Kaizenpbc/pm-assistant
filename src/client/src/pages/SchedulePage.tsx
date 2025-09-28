@@ -103,228 +103,48 @@ const SchedulePage: React.FC = () => {
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Mock project data - updated to use the correct project based on ID
-  const mockProjects: Record<string, Project> = {
-    '1': {
-      id: '1',
-      code: 'AR-INFRA-2024',
-      name: 'Anna Regina Infrastructure Development',
-      description: 'Comprehensive infrastructure development project for Anna Regina including roads, utilities, and public facilities',
-      status: 'active',
-      priority: 'high',
-      category: 'infrastructure'
-    },
-    '2': {
-      id: '2',
-      code: 'GSC-2024',
-      name: 'Georgetown Smart City Initiative',
-      description: 'Implementation of smart city technologies including IoT sensors, data analytics, and digital governance systems',
-      status: 'active',
-      priority: 'high',
-      category: 'technology'
-    },
-    '3': {
-      id: '3',
-      code: 'DES-2024',
-      name: 'Dartmouth Essequibo School Construction',
-      description: 'Construction of a new primary school in Dartmouth, Essequibo to serve the local community',
-      status: 'planning',
-      priority: 'high',
-      category: 'education'
-    }
-  };
+  // No mock project data - clean development environment
 
 
   // Mock schedule data - removed, will be loaded from database
 
-  // Mock tasks data - Road Construction template
-  // const roadConstructionTasks: ScheduleTask[] = [
-  /*  {
-      id: 'phase-initiation',
-      name: 'Project Initiation',
-      description: 'Initial project setup and stakeholder alignment',
-      startDate: '2024-01-15',
-      endDate: '2024-01-20',
-      status: 'completed',
-      priority: 'high',
-      progress: 100,
-      estimatedHours: 40,
-      actualHours: 40,
-      estimated_days: 5,
-      dependency: '',
-      work_effort: '8 hours/day',
-      assignedResource: 'Project Manager',
-      risks: 'Low',
-      issues: 'None',
-      comments: 'Completed on time'
-    },
-    {
-      id: 'phase-analysis',
-      name: 'Site Analysis & Survey',
-      description: 'Comprehensive site assessment and condition analysis',
-      startDate: '2024-01-21',
-      endDate: '2024-02-05',
-      status: 'in_progress',
-      priority: 'high',
-      progress: 60,
-      estimatedHours: 120,
-      actualHours: 72,
-      estimated_days: 15,
-      dependency: 'Project Initiation',
-      work_effort: '8 hours/day',
-      assignedResource: 'Survey Team',
-      risks: 'Medium - Weather dependent',
-      issues: 'Equipment delay',
-      comments: 'On track despite delays'
-    },
-    {
-      id: 'phase-design',
-      name: 'Design & Planning',
-      description: 'Create detailed project design and specifications',
-      startDate: '2024-02-06',
-      endDate: '2024-02-25',
-      status: 'pending',
-      priority: 'high',
-      progress: 0,
-      estimatedHours: 160,
-      actualHours: 0,
-      estimated_days: 20,
-      dependency: 'Site Analysis & Survey',
-      work_effort: '8 hours/day',
-      assignedResource: 'Engineering Team',
-      risks: 'Low',
-      issues: 'None',
-      comments: 'Waiting for survey completion'
-    },
-    {
-      id: 'phase-construction',
-      name: 'Construction & Execution',
-      description: 'Physical construction and implementation',
-      startDate: '2024-02-26',
-      endDate: '2024-04-15',
-      status: 'pending',
-      priority: 'high',
-      progress: 0,
-      estimatedHours: 400,
-      actualHours: 0,
-      estimated_days: 50,
-      dependency: 'Design & Planning',
-      work_effort: '8 hours/day',
-      assignedResource: 'Construction Team',
-      risks: 'High - Weather and material delays',
-      issues: 'None',
-      comments: 'Major construction phase'
-    }
-  */
-  // ];
-
-  // Mock subtasks for phases
-  // const mockSubtasks: Record<string, ScheduleTask[]> = {
-  /*  'phase-initiation': [
-      {
-        id: 'task-1',
-        name: 'Project kickoff meeting',
-        description: 'Meet with stakeholders and team',
-        startDate: '2024-01-15',
-        endDate: '2024-01-15',
-        status: 'completed',
-        priority: 'high',
-        progress: 100,
-        estimatedHours: 4,
-        actualHours: 4,
-        parentTaskId: 'phase-initiation',
-        estimatedDays: 1,
-        dependency: '',
-        workEffort: '4 hours',
-        assignedResource: 'Project Manager',
-        risks: 'None',
-        issues: 'None',
-        comments: 'Successful meeting'
-      },
-      {
-        id: 'task-2',
-        name: 'Site access coordination',
-        description: 'Arrange site access and permits',
-        startDate: '2024-01-16',
-        endDate: '2024-01-18',
-        status: 'completed',
-        priority: 'high',
-        progress: 100,
-        estimatedHours: 8,
-        actualHours: 8,
-        parentTaskId: 'phase-initiation',
-        estimatedDays: 2,
-        dependency: 'Project kickoff meeting',
-        workEffort: '4 hours/day',
-        assignedResource: 'Project Manager',
-        risks: 'Low',
-        issues: 'None',
-        comments: 'Permits obtained'
-      }
-    ],
-    'phase-analysis': [
-      {
-        id: 'task-3',
-        name: 'Road condition survey',
-        description: 'Assess current road condition and damage',
-        startDate: '2024-01-21',
-        endDate: '2024-01-25',
-        status: 'completed',
-        priority: 'high',
-        progress: 100,
-        estimatedHours: 16,
-        actualHours: 16,
-        parentTaskId: 'phase-analysis',
-        estimatedDays: 4,
-        dependency: '',
-        workEffort: '4 hours/day',
-        assignedResource: 'Survey Team',
-        risks: 'Medium',
-        issues: 'None',
-        comments: 'Survey completed'
-      },
-      {
-        id: 'task-4',
-        name: 'Traffic impact assessment',
-        description: 'Analyze traffic patterns and impact',
-        startDate: '2024-01-26',
-        endDate: '2024-01-30',
-        status: 'in_progress',
-        priority: 'high',
-        progress: 60,
-        estimatedHours: 12,
-        actualHours: 7,
-        parentTaskId: 'phase-analysis',
-        estimatedDays: 3,
-        dependency: 'Road condition survey',
-        workEffort: '4 hours/day',
-        assignedResource: 'Traffic Engineer',
-        risks: 'Medium',
-        issues: 'Data collection delay',
-        comments: 'In progress'
-      }
-    ]
-  */
-  // };
+  // Clean development environment - no mock data
 
   useEffect(() => {
-    // Load project data
-    const currentProject = mockProjects[actualProjectId || '2'];
-    setProject(currentProject);
+    // Load project data from API
+    const loadProjectData = async () => {
+      if (!actualProjectId) return;
+      
+      try {
+        const projectResponse = await apiService.getProject(actualProjectId);
+        setProject(projectResponse.project);
+      } catch (error) {
+        console.error('Failed to load project:', error);
+        // Create a minimal project object for display
+        setProject({
+          id: actualProjectId,
+          code: 'PROJECT',
+          name: 'Project',
+          description: 'Project description',
+          status: 'active',
+          priority: 'medium',
+          category: 'general'
+        });
+      }
+    };
     
     // Load schedule data from database
     const loadScheduleData = async () => {
-      if (!currentProject?.id) return;
+      if (!actualProjectId) return;
       
       setIsLoadingSchedule(true);
       setLoadError(null);
       
       try {
         console.log('=== LOADING SCHEDULE FROM DATABASE ===');
-        console.log('Current project:', currentProject);
-        console.log('Project ID:', currentProject.id);
+        console.log('Project ID:', actualProjectId);
         
-        const schedulesResponse = await apiService.getSchedules(currentProject.id);
+        const schedulesResponse = await apiService.getSchedules(actualProjectId);
         console.log('Schedules response:', schedulesResponse);
         
         if (schedulesResponse.schedules && schedulesResponse.schedules.length > 0) {
@@ -368,10 +188,10 @@ const SchedulePage: React.FC = () => {
               }
             });
             setTaskHierarchy(hierarchy);
-    } else {
-      setScheduleTasks([]);
-      setTaskHierarchy({});
-    }
+          } else {
+            setScheduleTasks([]);
+            setTaskHierarchy({});
+          }
           
           console.log('Loaded schedule from database:', scheduleToUse.name);
         } else {
@@ -380,18 +200,23 @@ const SchedulePage: React.FC = () => {
           setScheduleTasks([]);
           setTaskHierarchy({});
         }
+        
+        // Set loading to false after processing schedules
+        console.log('🔄 Setting isLoadingSchedule to false (success path)');
+        setIsLoadingSchedule(false);
       } catch (error) {
-        console.error('Error loading schedule data:', error);
+        console.error('❌ Error loading schedule data:', error);
         setLoadError('Failed to load schedule data. Please try again.');
         // Fallback to blank schedule on error
         setCurrentSchedule(null);
         setScheduleTasks([]);
         setTaskHierarchy({});
-      } finally {
         setIsLoadingSchedule(false);
       }
     };
     
+    // Load both project and schedule data
+    loadProjectData();
     loadScheduleData();
   }, [actualProjectId]);
 
@@ -998,19 +823,11 @@ const SchedulePage: React.FC = () => {
   };
 
 
-  if (!project) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Loading project schedule...</p>
-        </div>
-      </div>
-    );
-  }
+  // Project loading is handled in useEffect, no need for early return
 
   // Show loading state while loading schedule
   if (isLoadingSchedule) {
+    console.log('🔄 SchedulePage: Still loading, showing spinner');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

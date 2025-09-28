@@ -1,29 +1,30 @@
 import React, { useState } from 'react';
-import { X, Calendar, DollarSign, Users, MapPin, Building, Wrench, Shield, GraduationCap, Heart, Zap } from 'lucide-react';
+import { X, Building, MapPin, Wrench, Shield } from 'lucide-react';
 
-interface ProjectCreationModalProps {
+interface ProjectEditModalProps {
   isOpen: boolean;
+  project: any;
   onClose: () => void;
-  onCreateProject: (projectData: any) => void;
+  onUpdate: (projectData: any) => void;
 }
 
-const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onCreateProject 
+const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
+  isOpen,
+  project,
+  onClose,
+  onUpdate
 }) => {
   const [projectData, setProjectData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    budget: '',
-    startDate: '',
-    endDate: '',
-    location: '',
-    projectManager: '',
-    assignedPM: '', // NEW: PM assignment field
-    priority: 'medium',
-    status: 'planning'
+    name: project?.name || '',
+    description: project?.description || '',
+    category: project?.category || '',
+    budget: project?.budget_allocated || '',
+    startDate: project?.start_date || '',
+    endDate: project?.end_date || '',
+    location: project?.location || '',
+    priority: project?.priority || 'medium',
+    status: project?.status || 'planning',
+    assignedPM: project?.project_manager_id || ''
   });
 
   const categories = [
@@ -32,54 +33,14 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
     { id: 'agriculture', name: 'Agriculture', icon: Wrench, color: 'green' },
     { id: 'infrastructure', name: 'Infrastructure', icon: Building, color: 'indigo' },
     { id: 'environmental', name: 'Environmental', icon: Shield, color: 'emerald' },
-    { id: 'education', name: 'Education', icon: GraduationCap, color: 'purple' },
-    { id: 'healthcare', name: 'Healthcare', icon: Heart, color: 'red' },
-    { id: 'technology', name: 'Technology', icon: Zap, color: 'yellow' }
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const newProject = {
-      ...projectData,
-      budget: parseFloat(projectData.budget) || 0
-    };
-    
-    onCreateProject(newProject);
-    
-    // Reset form
-    setProjectData({
-      name: '',
-      description: '',
-      category: '',
-      budget: '',
-      startDate: '',
-      endDate: '',
-      location: '',
-      projectManager: '',
-      assignedPM: '',
-      priority: 'medium',
-      status: 'planning'
-    });
-    
-    onClose();
+    onUpdate(projectData);
   };
 
   const handleClose = () => {
-    // Reset form when closing
-    setProjectData({
-      name: '',
-      description: '',
-      category: '',
-      budget: '',
-      startDate: '',
-      endDate: '',
-      location: '',
-      projectManager: '',
-      assignedPM: '',
-      priority: 'medium',
-      status: 'planning'
-    });
     onClose();
   };
 
@@ -87,10 +48,10 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Create New Project</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Edit Project</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -143,16 +104,15 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Budget (USD)
                 </label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="number"
-                    value={projectData.budget}
-                    onChange={(e) => setProjectData(prev => ({ ...prev, budget: e.target.value }))}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="0"
-                  />
-                </div>
+                <input
+                  type="number"
+                  value={projectData.budget}
+                  onChange={(e) => setProjectData(prev => ({ ...prev, budget: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                />
               </div>
 
               {/* Priority */}
@@ -177,15 +137,12 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Start Date
                 </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="date"
-                    value={projectData.startDate}
-                    onChange={(e) => setProjectData(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={projectData.startDate}
+                  onChange={(e) => setProjectData(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
 
               {/* End Date */}
@@ -193,35 +150,33 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   End Date
                 </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="date"
-                    value={projectData.endDate}
-                    onChange={(e) => setProjectData(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={projectData.endDate}
+                  onChange={(e) => setProjectData(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
 
-              {/* Location */}
+              {/* Status */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
+                  Status
                 </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={projectData.location}
-                    onChange={(e) => setProjectData(prev => ({ ...prev, location: e.target.value }))}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter location"
-                  />
-                </div>
+                <select
+                  value={projectData.status}
+                  onChange={(e) => setProjectData(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="planning">Planning</option>
+                  <option value="active">Active</option>
+                  <option value="on-hold">On Hold</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
               </div>
 
-              {/* Project Manager Assignment */}
+              {/* Assigned PM */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Project Manager (Optional)
@@ -249,25 +204,38 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                 onChange={(e) => setProjectData(prev => ({ ...prev, description: e.target.value }))}
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter project description"
+                placeholder="Enter project description..."
               />
             </div>
 
-            {/* Submit Buttons */}
+            {/* Location */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location
+              </label>
+              <input
+                type="text"
+                value={projectData.location}
+                onChange={(e) => setProjectData(prev => ({ ...prev, location: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter project location"
+              />
+            </div>
+
+            {/* Action Buttons */}
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
               >
-                <Building className="h-4 w-4" />
-                Create Project
+                Update Project
               </button>
             </div>
           </form>
@@ -277,4 +245,4 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
   );
 };
 
-export default ProjectCreationModal;
+export default ProjectEditModal;

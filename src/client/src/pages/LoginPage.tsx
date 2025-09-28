@@ -18,6 +18,13 @@ export const LoginPage: React.FC = () => {
 
     try {
       const response = await apiService.login(username, password);
+      
+      // Store user information including role for API calls
+      if (response.user) {
+        localStorage.setItem('userRole', response.user.role);
+        localStorage.setItem('userId', response.user.id);
+      }
+      
       setUser(response.user);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Login failed';

@@ -6,7 +6,7 @@ export interface User {
   username: string;
   email: string;
   fullName: string;
-  role: 'admin' | 'manager' | 'user';
+  role: 'admin' | 'manager' | 'user' | 'rdc';
 }
 
 interface AuthState {
@@ -45,11 +45,19 @@ export const useAuthStore = create<AuthState>()(
         isLoading: false 
       }),
       
-      logout: () => set({ 
-        user: null, 
-        isAuthenticated: false,
-        error: null 
-      }),
+      logout: () => {
+        // Clear localStorage completely for complete logout
+        localStorage.removeItem('pm-auth-storage');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userId');
+        // Reset state
+        set({ 
+          user: null, 
+          isAuthenticated: false,
+          isLoading: false,
+          error: null 
+        });
+      },
       
       clearError: () => set({ error: null }),
     }),

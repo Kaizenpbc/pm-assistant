@@ -78,7 +78,15 @@ class ApiService {
 
   // Project endpoints
   async getProjects() {
-    const response = await this.api.get('/projects');
+    const userRole = localStorage.getItem('userRole') || 'admin';
+    const userId = localStorage.getItem('userId') || 'admin-001';
+    
+    const response = await this.api.get('/projects', {
+      headers: {
+        'x-user-role': userRole,
+        'x-user-id': userId
+      }
+    });
     return response.data;
   }
 
@@ -95,8 +103,12 @@ class ApiService {
     budgetAllocated?: number;
     startDate?: string;
     endDate?: string;
+    assignedPM?: string;
   }) {
-    const response = await this.api.post('/projects', projectData);
+    const response = await this.api.post('/projects', {
+      ...projectData,
+      assignedPM: projectData.assignedPM || null
+    });
     return response.data;
   }
 

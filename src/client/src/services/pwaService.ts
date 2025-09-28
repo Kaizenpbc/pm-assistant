@@ -161,6 +161,11 @@ class PWAService {
   }
 
   private async checkForUpdates(): Promise<void> {
+    // Skip PWA updates in development
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
+    
     if (this.registration) {
       try {
         await this.registration.update();
