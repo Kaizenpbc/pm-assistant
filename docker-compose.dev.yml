@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Backend API Server
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pm-application-v2-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      HOST: 0.0.0.0
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: pm_application_v2
+      JWT_SECRET: SO8ZTe1/iIb3t/lKXwgAScQDdQER04lUVeqTJQyL5JI=
+      JWT_REFRESH_SECRET: vPX2A7E94LJSu9AN0WobnlXYmVzIXMglQV/anoJVKdM=
+      COOKIE_SECRET: s1BJ4NCo3fWo0enVhWbyk2nhIt3NIxkdUXb7/JWn0V4=
+      CORS_ORIGIN: http://localhost:5173
+      LOG_LEVEL: debug
+    ports:
+      - "3001:3001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - pm-network
+
+  # Frontend Development Server
+  frontend:
+    image: node:18-alpine
+    container_name: pm-application-v2-frontend
+    working_dir: /app
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src/client:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - pm-network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: pm-application-v2-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: pm_application_v2
+      MYSQL_USER: pm_user
+      MYSQL_PASSWORD: pm_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/server/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - pm-network
+
+volumes:
+  mysql_data:
+
+networks:
+  pm-network:
+    driver: bridge

@@ -6,6 +6,8 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectPage } from './pages/ProjectPage';
 import SchedulePage from './pages/SchedulePage';
+import MonitoringPage from './pages/MonitoringPage';
+import PerformanceDashboard from './components/PerformanceDashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import AppLoadingWrapper from './components/AppLoadingWrapper';
@@ -113,7 +115,13 @@ function App() {
                 <Route 
                   path="/monitoring" 
                   element={
-                    isAuthenticated ? <MonitoringDashboard /> : <Navigate to="/login" replace />
+                    isAuthenticated ? <MonitoringPage /> : <Navigate to="/login" replace />
+                  } 
+                />
+                <Route 
+                  path="/performance" 
+                  element={
+                    isAuthenticated ? <PerformanceDashboard /> : <Navigate to="/login" replace />
                   } 
                 />
                 <Route 

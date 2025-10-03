@@ -23,7 +23,8 @@ import {
   User,
   Lightbulb,
   Loader2,
-  Plus
+  Plus,
+  Activity
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -294,6 +295,22 @@ export const DashboardPage: React.FC = () => {
               type="button"
             >
               ➕ Create New Project
+            </button>
+            <button
+              onClick={() => navigate('/monitoring')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md flex items-center gap-2"
+              type="button"
+            >
+              <Activity className="w-4 h-4" />
+              System Monitoring
+            </button>
+            <button
+              onClick={() => navigate('/performance')}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md flex items-center gap-2"
+              type="button"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Performance Metrics
             </button>
             <button
               onClick={handlePortfolioAnalysis}

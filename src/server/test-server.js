@@ -772,6 +772,8 @@ app.post('/api/v1/schedules/:scheduleId/tasks', async (req, res) => {
       // Additional fields
       work_effort: taskData.workEffort || taskData.work_effort || `${estimatedValue} ${estimatedUnit}`,
       dependency: taskData.dependency || null,
+      dependency_type: taskData.dependencyType || 'FS',
+      lag_time: taskData.lagTime || 0,
       risks: taskData.risks || null,
       issues: taskData.issues || null,
       comments: taskData.comments || null,
@@ -788,37 +790,39 @@ app.post('/api/v1/schedules/:scheduleId/tasks', async (req, res) => {
     
     // Insert task into database
     await dbPool.execute(
-      `INSERT INTO tasks (
-        id, schedule_id, name, description, status, priority,
-        estimated_days, estimated_hours, estimated_value, estimated_unit,
-        assigned_to, assignee, due_date, start_date, end_date,
-        work_effort, dependency, risks, issues, comments, parent_task_id, created_by, dependencies
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        newTask.id,
-        newTask.schedule_id,
-        newTask.name,
-        newTask.description,
-        newTask.status,
-        newTask.priority,
-        newTask.estimated_days,
-        newTask.estimated_hours,
-        newTask.estimated_value,
-        newTask.estimated_unit,
-        newTask.assigned_to,
-        newTask.assignee,
-        newTask.due_date,
-        newTask.startDate,
-        newTask.endDate,
-        newTask.work_effort,
-        newTask.dependency,
-        newTask.risks,
-        newTask.issues,
-        newTask.comments,
-        newTask.parent_task_id,
-        newTask.created_by,
-        JSON.stringify(newTask.dependencies)
-      ]
+        `INSERT INTO tasks (
+          id, schedule_id, name, description, status, priority,
+          estimated_days, estimated_hours, estimated_value, estimated_unit,
+          assigned_to, assignee, due_date, start_date, end_date,
+          work_effort, dependency, dependency_type, lag_time, risks, issues, comments, parent_task_id, created_by, dependencies
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          newTask.id,
+          newTask.schedule_id,
+          newTask.name,
+          newTask.description,
+          newTask.status,
+          newTask.priority,
+          newTask.estimated_days,
+          newTask.estimated_hours,
+          newTask.estimated_value,
+          newTask.estimated_unit,
+          newTask.assigned_to,
+          newTask.assignee,
+          newTask.due_date,
+          newTask.startDate,
+          newTask.endDate,
+          newTask.work_effort,
+          newTask.dependency,
+          newTask.dependency_type || 'FS',
+          newTask.lag_time || 0,
+          newTask.risks,
+          newTask.issues,
+          newTask.comments,
+          newTask.parent_task_id,
+          newTask.created_by,
+          JSON.stringify(newTask.dependencies)
+        ]
     );
     
     console.log('✅ Task saved to database successfully');
@@ -946,6 +950,8 @@ app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
       // Additional fields
       work_effort: taskData.workEffort || taskData.work_effort || `${estimatedValue} ${estimatedUnit}`,
       dependency: taskData.dependency || null,
+      dependency_type: taskData.dependencyType || 'FS',
+      lag_time: taskData.lagTime || 0,
       risks: taskData.risks || null,
       issues: taskData.issues || null,
       comments: taskData.comments || null,
@@ -969,7 +975,7 @@ app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
         name = ?, description = ?, status = ?, priority = ?,
         estimated_days = ?, estimated_hours = ?, estimated_value = ?, estimated_unit = ?,
         assigned_to = ?, assignee = ?, due_date = ?, start_date = ?, end_date = ?,
-        work_effort = ?, dependency = ?, risks = ?, issues = ?, comments = ?,
+        work_effort = ?, dependency = ?, dependency_type = ?, lag_time = ?, risks = ?, issues = ?, comments = ?,
         parent_task_id = ?, dependencies = ?, updated_at = NOW()
       WHERE id = ? AND schedule_id = ?`,
       [
@@ -988,6 +994,8 @@ app.put('/api/v1/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
         endDate,
         updatedTask.work_effort,
         updatedTask.dependency,
+        updatedTask.dependency_type || 'FS',
+        updatedTask.lag_time || 0,
         updatedTask.risks,
         updatedTask.issues,
         updatedTask.comments,

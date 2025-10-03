@@ -75,11 +75,47 @@
 
 ### **🧪 Testing**
 - ✅ **Unit tests** - Vitest for components
+- ✅ **System connectivity tests** - Health endpoints, database connectivity, monitoring
+- ✅ **Configuration validation tests** - Environment validation and secret generation
 - ✅ **E2E tests** - Playwright for user flows
 - ✅ **Accessibility tests** - A11y testing
 - ✅ **API tests** - Backend testing
 
-## 🚀 **Quick Start**
+## 🐳 **Docker Setup (Recommended)**
+
+**Start the complete application stack in one command:**
+```bash
+# Clone and start everything
+git clone <repository-url>
+cd pm-application-v2
+npm run docker:dev
+```
+
+**Access the application:**
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:3001  
+- **Database:** localhost:3306
+- **Login:** `test/password`
+
+**Docker Commands:**
+```bash
+npm run docker:dev           # Start all services
+npm run docker:dev:detached  # Start in background
+npm run docker:stop          # Stop all services
+npm run docker:clean         # Stop and remove containers/volumes
+npm run docker:logs          # View logs from all services
+npm run docker:health        # Check service health
+npm run docker:mysql         # Start only MySQL database
+```
+
+**Benefits of Docker Setup:**
+- ✅ **No environment setup required**
+- ✅ **Consistent database connection**
+- ✅ **Automatic service dependencies**
+- ✅ **Easy development environment**
+- ✅ **Production-ready configuration**
+
+## 🚀 **Quick Start (Local Development)**
 
 ### **1. Install Dependencies**
 ```bash
@@ -147,6 +183,10 @@ npm run build:client       # Build client only
 
 # Testing
 npm run test               # Run unit tests
+npm run test:system        # Run system connectivity tests
+npm run test:connectivity  # Run health endpoint tests
+npm run test:health-scripts # Run health check script tests
+npm run test:config-validation # Run configuration validation tests
 npm run test:e2e           # Run E2E tests
 
 # Code Quality

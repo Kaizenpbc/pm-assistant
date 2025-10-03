@@ -22,6 +22,71 @@ This guide covers the comprehensive testing strategy implemented for the PM Appl
 
 ---
 
+## 🔗 **System Connectivity Testing**
+
+System connectivity tests ensure that all system components can communicate properly and that health monitoring works correctly.
+
+### **Test Categories**
+
+#### **Health Endpoint Tests** (`tests/integration/system/connectivity.test.ts`)
+- ✅ **Basic health check** - `/health/basic` endpoint response
+- ✅ **Detailed health check** - `/health/detailed` endpoint with comprehensive system status
+- ✅ **Readiness probe** - `/health/ready` endpoint for service readiness
+- ✅ **Liveness probe** - `/health/live` endpoint for service liveness
+- ✅ **Database connectivity** - Database connection status and response times
+- ✅ **API accessibility** - All API endpoints are reachable
+- ✅ **System resource monitoring** - Memory usage, CPU load, performance metrics
+- ✅ **Response time performance** - Endpoints respond within acceptable time limits
+- ✅ **Concurrent request handling** - Multiple simultaneous health checks
+- ✅ **Error handling** - Graceful degradation when services are down
+
+#### **Health Check Script Tests** (`tests/integration/system/health-check-script.test.ts`)
+- ✅ **Script execution** - Health check script runs successfully
+- ✅ **Output validation** - Report structure, timestamps, response times
+- ✅ **Error handling** - Behavior when services are down
+- ✅ **Environment configuration** - Custom host/port settings
+- ✅ **Performance testing** - Execution time and memory usage limits
+- ✅ **Concurrent execution** - Multiple script instances
+
+#### **Configuration Validation Tests** (`tests/integration/system/configuration-validation.test.ts`)
+- ✅ **Script execution** - Configuration validation script works correctly
+- ✅ **Valid configuration** - Proper validation passes with correct config
+- ✅ **Invalid configuration** - Validation fails with bad configuration
+- ✅ **Secret generation** - Secret generation script produces unique, secure secrets
+- ✅ **Integration testing** - Configuration validation after secret generation
+- ✅ **Performance testing** - Execution time and concurrent validation
+
+### **Running System Connectivity Tests**
+
+```bash
+# Run all system connectivity tests
+npm run test:system
+
+# Run specific test categories
+npm run test:connectivity        # Health endpoints & connectivity
+npm run test:health-scripts      # Health check script tests
+npm run test:config-validation   # Configuration validation tests
+
+# Run with verbose output
+npm run test:system -- --reporter=verbose
+
+# Run with coverage
+npm run test:system -- --coverage
+```
+
+### **Test Coverage**
+
+System connectivity tests provide comprehensive coverage of:
+- **Health monitoring endpoints** - All health check endpoints
+- **Database connectivity** - Connection status, response times, error handling
+- **API accessibility** - Endpoint availability and proper responses
+- **System resources** - Memory, CPU, and performance monitoring
+- **Configuration validation** - Environment variables and security validation
+- **Error scenarios** - Graceful handling of service failures
+- **Performance requirements** - Response time and resource usage limits
+
+---
+
 ## 🛠️ **Testing Technologies**
 
 ### **Unit Testing**
@@ -53,6 +118,10 @@ tests/
 ├── integration/                # Integration tests (20%)
 │   ├── api/                   # API endpoint tests
 │   │   └── projects.test.ts   # Projects API tests
+│   ├── system/                # System connectivity tests
+│   │   ├── connectivity.test.ts           # Health endpoints & connectivity
+│   │   ├── health-check-script.test.ts    # Health check script tests
+│   │   └── configuration-validation.test.ts # Config validation tests
 │   └── database/              # Database integration tests
 ├── e2e/                       # End-to-end tests (10%)
 │   ├── user-workflows/        # Critical user journeys

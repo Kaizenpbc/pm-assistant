@@ -6,6 +6,8 @@ import { scheduleRoutes } from './routes/schedules';
 import { aiSchedulingRoutes } from './routes/aiScheduling';
 import { versionRoutes } from './routes/version';
 import { healthRoutes } from './routes/health';
+import { systemHealthRoutes } from './routes/systemHealth';
+import { performanceMonitoringRoutes } from './routes/performanceMonitoring';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // API routes
@@ -16,6 +18,10 @@ export async function registerRoutes(fastify: FastifyInstance) {
   await fastify.register(aiSchedulingRoutes, { prefix: '/api/v1/ai-scheduling' });
   await fastify.register(healthRoutes, { prefix: '/api/v1/health' });
   await fastify.register(versionRoutes, { prefix: '/api/v1' });
+  await fastify.register(performanceMonitoringRoutes, { prefix: '/api/v1' });
+  
+  // System health routes (no prefix for direct access)
+  await fastify.register(systemHealthRoutes);
 
   // Serve static files (for production)
   if (process.env.NODE_ENV === 'production') {

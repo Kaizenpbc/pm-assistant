@@ -11,11 +11,11 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 5173,
     host: true,
     open: true, // Automatically open browser
     hmr: {
-      port: 3000,
+      port: 5173,
       host: 'localhost',
       overlay: true, // Show error overlays
     },
@@ -25,7 +25,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:3002', // Fixed: backend is on 3002
+        target: 'http://localhost:3001', // Backend is on 3001
         changeOrigin: true,
         secure: false,
       },

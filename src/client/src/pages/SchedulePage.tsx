@@ -234,6 +234,9 @@ const SchedulePage: React.FC = () => {
   const [editableDates, setEditableDates] = useState<Record<string, { start?: string; finish?: string }>>({});
   const [editableDurations, setEditableDurations] = useState<Record<string, string>>({});
   const [editableWorkEfforts, setEditableWorkEfforts] = useState<Record<string, string>>({});
+  const [editableDependencies, setEditableDependencies] = useState<Record<string, string>>({});
+  const [editableDependencyTypes, setEditableDependencyTypes] = useState<Record<string, string>>({});
+  const [editableLagTimes, setEditableLagTimes] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -348,17 +351,30 @@ const SchedulePage: React.FC = () => {
       const initialDates: Record<string, { start?: string; finish?: string }> = {};
       const initialDurations: Record<string, string> = {};
       const initialWorkEfforts: Record<string, string> = {};
+      const initialDependencies: Record<string, string> = {};
+      const initialDependencyTypes: Record<string, string> = {};
+      const initialLagTimes: Record<string, number> = {};
       
       scheduleTasks.forEach(task => {
         if (task.startDate) initialDates[task.id] = { start: task.startDate };
         if (task.endDate) initialDates[task.id] = { ...initialDates[task.id], finish: task.endDate };
         if (task.estimated_days) initialDurations[task.id] = task.estimated_days.toString();
         if (task.work_effort) initialWorkEfforts[task.id] = task.work_effort;
+        if (task.dependency) initialDependencies[task.id] = task.dependency;
+        
+        // Default dependency type to FS (Finish-to-Start) for existing dependencies
+        if (task.dependency) {
+          initialDependencyTypes[task.id] = 'FS';
+          initialLagTimes[task.id] = 0;
+        }
       });
       
       setEditableDates(initialDates);
       setEditableDurations(initialDurations);
       setEditableWorkEfforts(initialWorkEfforts);
+      setEditableDependencies(initialDependencies);
+      setEditableDependencyTypes(initialDependencyTypes);
+      setEditableLagTimes(initialLagTimes);
     }
   }, [scheduleTasks]);
 
@@ -402,8 +418,18 @@ const SchedulePage: React.FC = () => {
       [taskId]: value
     }));
     setHasUnsavedChanges(true);
+    
     // Auto-calculate finish date when duration changes
     autoCalculateFinishDate(taskId);
+    
+    // If this task has dependencies, recalculate dependent tasks
+    const dependentTasks = scheduleTasks.filter(task => 
+      editableDependencies[task.id] === taskId || task.dependency === taskId
+    );
+    
+    dependentTasks.forEach(dependentTask => {
+      recalculateTaskDates(dependentTask.id, taskId);
+    });
   };
 
   const handleWorkEffortChange = (taskId: string, value: string) => {
@@ -414,6 +440,126 @@ const SchedulePage: React.FC = () => {
     setHasUnsavedChanges(true);
     // Auto-calculate finish date when work effort changes
     autoCalculateFinishDate(taskId);
+  };
+
+  const handleDependencyChange = (taskId: string, value: string) => {
+    setEditableDependencies(prev => ({
+      ...prev,
+      [taskId]: value
+    }));
+    setHasUnsavedChanges(true);
+    
+    // Trigger automatic date recalculation
+    if (value) {
+      recalculateTaskDates(taskId, value);
+    }
+  };
+
+  const handleDependencyTypeChange = (taskId: string, value: string) => {
+    setEditableDependencyTypes(prev => ({
+      ...prev,
+      [taskId]: value
+    }));
+    setHasUnsavedChanges(true);
+    
+    // Recalculate dates when dependency type changes
+    const dependencyTaskId = editableDependencies[taskId];
+    if (dependencyTaskId) {
+      recalculateTaskDates(taskId, dependencyTaskId);
+    }
+  };
+
+  const handleLagTimeChange = (taskId: string, value: string) => {
+    const lagDays = parseInt(value) || 0;
+    setEditableLagTimes(prev => ({
+      ...prev,
+      [taskId]: lagDays
+    }));
+    setHasUnsavedChanges(true);
+    
+    // Recalculate dates when lag time changes
+    const dependencyTaskId = editableDependencies[taskId];
+    if (dependencyTaskId) {
+      recalculateTaskDates(taskId, dependencyTaskId);
+    }
+  };
+
+  // Microsoft Project-style dependency calculation
+  const recalculateTaskDates = (dependentTaskId: string, predecessorTaskId: string) => {
+    const predecessorTask = scheduleTasks.find(task => task.id === predecessorTaskId);
+    const dependentTask = scheduleTasks.find(task => task.id === dependentTaskId);
+    
+    if (!predecessorTask || !dependentTask) return;
+
+    const dependencyType = editableDependencyTypes[dependentTaskId] || 'FS'; // Default to Finish-to-Start
+    const lagDays = editableLagTimes[dependentTaskId] || 0;
+    const duration = parseInt(editableDurations[dependentTaskId] || dependentTask.estimated_days?.toString() || '1');
+
+    let newStartDate: Date;
+    let newEndDate: Date;
+
+    // Get predecessor dates (use editable dates if available)
+    const predStartDate = editableDates[predecessorTaskId]?.start 
+      ? new Date(editableDates[predecessorTaskId].start!)
+      : predecessorTask.startDate 
+      ? new Date(predecessorTask.startDate)
+      : new Date();
+    
+    const predEndDate = editableDates[predecessorTaskId]?.finish
+      ? new Date(editableDates[predecessorTaskId].finish!)
+      : predecessorTask.endDate
+      ? new Date(predecessorTask.endDate)
+      : new Date();
+
+    // Calculate new dates based on dependency type
+    switch (dependencyType) {
+      case 'FS': // Finish-to-Start: Dependent task starts when predecessor finishes
+        newStartDate = new Date(predEndDate);
+        newStartDate.setDate(newStartDate.getDate() + lagDays + 1); // +1 because next day
+        newEndDate = new Date(newStartDate);
+        newEndDate.setDate(newEndDate.getDate() + duration - 1); // -1 because inclusive
+        break;
+        
+      case 'SS': // Start-to-Start: Both tasks start at same time
+        newStartDate = new Date(predStartDate);
+        newStartDate.setDate(newStartDate.getDate() + lagDays);
+        newEndDate = new Date(newStartDate);
+        newEndDate.setDate(newEndDate.getDate() + duration - 1);
+        break;
+        
+      case 'FF': // Finish-to-Finish: Both tasks finish at same time
+        newEndDate = new Date(predEndDate);
+        newEndDate.setDate(newEndDate.getDate() + lagDays);
+        newStartDate = new Date(newEndDate);
+        newStartDate.setDate(newStartDate.getDate() - duration + 1);
+        break;
+        
+      case 'SF': // Start-to-Finish: Dependent task finishes when predecessor starts
+        newEndDate = new Date(predStartDate);
+        newEndDate.setDate(newEndDate.getDate() + lagDays);
+        newStartDate = new Date(newEndDate);
+        newStartDate.setDate(newStartDate.getDate() - duration + 1);
+        break;
+        
+      default:
+        return;
+    }
+
+    // Update the dependent task's dates
+    setEditableDates(prev => ({
+      ...prev,
+      [dependentTaskId]: {
+        start: newStartDate.toISOString().split('T')[0],
+        finish: newEndDate.toISOString().split('T')[0]
+      }
+    }));
+
+    console.log(`📅 Recalculated dates for ${dependentTask.name}:`, {
+      dependencyType,
+      lagDays,
+      newStartDate: newStartDate.toISOString().split('T')[0],
+      newEndDate: newEndDate.toISOString().split('T')[0]
+    });
   };
 
   // Helper function to auto-calculate finish date based on start date and duration
@@ -733,8 +879,10 @@ const SchedulePage: React.FC = () => {
             assignedTo: (task.assigned_to || (task as any).assignedTo) === 'TBD' ? undefined : (task.assigned_to || (task as any).assignedTo),
             dueDate: (task.due_date || task.endDate) || undefined,
             estimatedDays: task.estimated_days ? Number(task.estimated_days) : undefined,
-            workEffort: task.work_effort,
-            dependency: task.dependency,
+            workEffort: editableWorkEfforts[task.id] || task.work_effort,
+            dependency: editableDependencies[task.id] || task.dependency,
+            dependencyType: editableDependencyTypes[task.id] || 'FS',
+            lagTime: editableLagTimes[task.id] || 0,
             risks: task.risks,
             issues: task.issues,
             comments: task.comments,
@@ -763,8 +911,10 @@ const SchedulePage: React.FC = () => {
             assignedTo: (task.assigned_to || (task as any).assignedTo) === 'TBD' ? undefined : (task.assigned_to || (task as any).assignedTo),
             dueDate: (task.due_date || task.endDate) || undefined,
             estimatedDays: task.estimated_days ? Number(task.estimated_days) : undefined,
-            workEffort: task.work_effort,
-            dependency: task.dependency,
+            workEffort: editableWorkEfforts[task.id] || task.work_effort,
+            dependency: editableDependencies[task.id] || task.dependency,
+            dependencyType: editableDependencyTypes[task.id] || 'FS',
+            lagTime: editableLagTimes[task.id] || 0,
             risks: task.risks,
             issues: task.issues,
             comments: task.comments,
@@ -1223,7 +1373,50 @@ const SchedulePage: React.FC = () => {
                               </div>
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-sm">
-                              {task.dependency || '-'}
+                              <div className="space-y-1">
+                                {/* Dependency Task Selector */}
+                                <select
+                                  value={editableDependencies[task.id] || task.dependency || ''}
+                                  onChange={(e) => handleDependencyChange(task.id, e.target.value)}
+                                  className="w-full border-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                >
+                                  <option value="">No dependency</option>
+                                  {scheduleTasks
+                                    .filter(otherTask => otherTask.id !== task.id && !otherTask.parent_task_id)
+                                    .map(otherTask => (
+                                      <option key={otherTask.id} value={otherTask.id}>
+                                        {otherTask.name}
+                                      </option>
+                                    ))}
+                                </select>
+                                
+                                {/* Dependency Type and Lag Time (only show if dependency is selected) */}
+                                {(editableDependencies[task.id] || task.dependency) && (
+                                  <div className="flex gap-1">
+                                    <select
+                                      value={editableDependencyTypes[task.id] || 'FS'}
+                                      onChange={(e) => handleDependencyTypeChange(task.id, e.target.value)}
+                                      className="flex-1 border-0 bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                      title="Dependency Type"
+                                    >
+                                      <option value="FS">FS</option>
+                                      <option value="SS">SS</option>
+                                      <option value="FF">FF</option>
+                                      <option value="SF">SF</option>
+                                    </select>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="365"
+                                      value={editableLagTimes[task.id] || 0}
+                                      onChange={(e) => handleLagTimeChange(task.id, e.target.value)}
+                                      className="w-12 border-0 bg-transparent text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                      placeholder="0"
+                                      title="Lag Days"
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-sm">
                               <input

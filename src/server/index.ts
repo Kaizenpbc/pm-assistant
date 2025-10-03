@@ -16,13 +16,18 @@ async function start() {
   try {
     console.log('🔄 Initializing PM Application v2...');
     
+    // Configuration validation is already done in config.ts import
+    // This ensures the server won't start with invalid configuration
+    
     // Test database connection
     console.log('🔌 Testing database connection...');
     const isConnected = await databaseService.testConnection();
     if (!isConnected) {
-      throw new Error('Database connection failed');
+      console.log('⚠️ Database connection failed - running in offline mode');
+      console.log('💡 To enable full functionality, start MySQL server');
+    } else {
+      console.log('✅ Database connection successful');
     }
-    console.log('✅ Database connection successful');
     
       // Skip migrations for now - tables created manually
       console.log('⚠️ Skipping database migrations - using manual setup');
