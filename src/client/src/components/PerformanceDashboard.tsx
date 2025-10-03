@@ -19,7 +19,7 @@ import {
   Database,
   Server,
   Cpu,
-  Memory,
+  Layers,
   HardDrive,
   Wifi,
   AlertCircle,
@@ -178,7 +178,7 @@ const PerformanceDashboard: React.FC = () => {
 
   const getMetricIcon = (metricName: string) => {
     if (metricName.includes('cpu')) return <Cpu className="w-5 h-5 text-orange-600" />;
-    if (metricName.includes('memory')) return <Memory className="w-5 h-5 text-purple-600" />;
+    if (metricName.includes('memory')) return <Layers className="w-5 h-5 text-purple-600" />;
     if (metricName.includes('disk')) return <HardDrive className="w-5 h-5 text-green-600" />;
     if (metricName.includes('database')) return <Database className="w-5 h-5 text-blue-600" />;
     if (metricName.includes('api')) return <Wifi className="w-5 h-5 text-indigo-600" />;

@@ -8,7 +8,7 @@ import {
   Database, 
   Server, 
   Cpu, 
-  Memory,
+  Layers,
   Clock,
   TrendingUp,
   TrendingDown,
@@ -373,7 +373,7 @@ const EnhancedMonitoringDashboard: React.FC = () => {
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
-              <Memory className="w-5 h-5 text-purple-600" />
+              <Layers className="w-5 h-5 text-purple-600" />
               <h3 className="font-semibold text-gray-900">Memory</h3>
             </div>
             {detailedHealth?.services.memory && (
