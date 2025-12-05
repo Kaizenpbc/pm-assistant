@@ -29,6 +29,59 @@ This document outlines the next steps to make this project production-ready and 
 
 ---
 
+## 🏛️ **Priority 0: Core Business Requirements (Ministry Mandate)** 🔴 CRITICAL
+*These specific functional requirements define the core purpose of the application.*
+
+### 1. **Role-Based Hierarchy & Dashboards**
+**Requirement:** strictly enforce views for Minister (10 Regions), REO (1 Region), PM (Project), and Citizen.
+
+- [ ] **Minister Dashboard (National View):**
+    - Usage: View status of projects across ALL 10 regions.
+    - Features: Aggregated stats, high-level map view, budget overview by region, "Red Flag" projects list.
+    - Implementation: New Analytics Dashboard aggregating `project_summary` view by region.
+
+- [ ] **REO Dashboard (Regional View):**
+    - Usage: Manage a specific Region.
+    - Features: List of all projects in their region through `region_id`, Manage `region_notices`, View and assign `citizen_issues`.
+    - Implementation: Filter existing dashboards by `user.region_id`.
+
+- [ ] **PM Dashboard (Project View):**
+    - Usage: Manage specific projects.
+    - Features: Detailed Gantt charts, task management, budget tracking for assigned projects.
+    - Implementation: Existing functionality, ensure strict permission boundaries (can only edit own projects).
+
+### 2. **Citizen Engagement Module**
+**Requirement:** Citizens must be able to login, view notices, view project status, and raise/track issues.
+
+- [ ] **Data Model Extension:**
+    - Create `citizen_issues` table:
+        ```sql
+        CREATE TABLE citizen_issues (
+            id VARCHAR(36) PRIMARY KEY,
+            region_id VARCHAR(36) NOT NULL,
+            user_id VARCHAR(36) NOT NULL, -- The citizen
+            category ENUM('complaint', 'suggestion', 'inquiry') NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            status ENUM('submitted', 'under_review', 'in_progress', 'resolved', 'dismissed') DEFAULT 'submitted',
+            admin_response TEXT,
+            location_lat DECIMAL(10, 8),
+            location_long DECIMAL(11, 8),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (region_id) REFERENCES regions(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        ```
+
+- [ ] **Citizen Portal UI:**
+    - **Notices Feed:** Read-only view of `region_notices` for their region.
+    - **Public Project Map:** Simplified view of `projects` (Status, Name, Expected Completion) without sensitive internal financial data.
+    - **My Issues:**
+        - "Report an Issue" form.
+        - List of my submitted issues with Status tracking.
+
+---
+
 ## 🎯 **Priority 1: Critical Improvements (Do First)**
 
 ### 1. **Comprehensive Error Handling** 🔴 HIGH PRIORITY
