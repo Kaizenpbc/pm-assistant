@@ -5,7 +5,7 @@
 ### **Backend**
 - **Fastify** - High-performance Node.js framework
 - **TypeScript** - Type-safe development
-- **PostgreSQL** - Production database
+- **MySQL** - Production database
 - **HttpOnly Cookies** - Secure authentication
 - **JWT** - Access & refresh tokens
 - **Zod** - Runtime type validation

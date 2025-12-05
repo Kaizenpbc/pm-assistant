@@ -1,0 +1,1 @@
+{"version":3,"file":"PWAInstallPrompt.d.ts","sourceRoot":"","sources":["../../../../src/client/src/components/PWAInstallPrompt.tsx"],"names":[],"mappings":"AAAA,OAAO,KAA8B,MAAM,OAAO,CAAC;AAGnD,UAAU,qBAAqB;IAC7B,SAAS,CAAC,EAAE,MAAM,IAAI,CAAC;IACvB,SAAS,CAAC,EAAE,MAAM,IAAI,CAAC;CACxB;AASD,QAAA,MAAM,gBAAgB,EAAE,KAAK,CAAC,EAAE,CAAC,qBAAqB,CAsMrD,CAAC;AAEF,eAAe,gBAAgB,CAAC"}

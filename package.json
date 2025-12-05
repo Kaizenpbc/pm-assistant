@@ -59,8 +59,8 @@
     "backup:schedule:stop": "node scripts/backup-scheduler.js stop",
     "backup:schedule:status": "node scripts/backup-scheduler.js status",
     "backup:once": "node scripts/backup-scheduler.js once",
-    "recovery": "scripts\\recovery.bat",
-    "setup": "scripts\\setup.bat",
+    "recovery": "node scripts/recovery.js",
+    "setup": "node scripts/setup.js",
     "reset": "npm run recovery",
     "fresh-install": "npm run setup"
   },
@@ -83,6 +83,8 @@
     "@fastify/swagger-ui": "^5.2.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^7.0.4",
+    "axios": "^1.13.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
@@ -90,9 +92,11 @@
     "fastify": "^5.6.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.15.1",
+    "nodemailer": "^7.0.10",
     "pino": "^9.11.0",
     "pino-pretty": "^13.1.1",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",

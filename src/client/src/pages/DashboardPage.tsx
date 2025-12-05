@@ -289,6 +289,16 @@ export const DashboardPage: React.FC = () => {
 
           {/* Action Buttons Row */}
           <div className="flex flex-wrap items-center gap-3">
+            {(user?.role === 'region_admin' || user?.role === 'admin') && (
+              <button
+                onClick={() => navigate('/region/admin')}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md flex items-center space-x-2"
+                type="button"
+              >
+                <span>⚙️</span>
+                <span>Manage Region</span>
+              </button>
+            )}
             <button
               onClick={() => setShowCreateProject(true)}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md"

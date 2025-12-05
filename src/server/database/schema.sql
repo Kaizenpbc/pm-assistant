@@ -5,7 +5,21 @@
 CREATE DATABASE IF NOT EXISTS pm_application_v2;
 USE pm_application_v2;
 
--- Users table with enhanced security
+-- Regions table for region-based project management
+CREATE TABLE IF NOT EXISTS regions (
+    id VARCHAR(36) PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_code (code),
+    INDEX idx_active (is_active)
+);
+
+-- Users table with enhanced security and region support
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -13,19 +27,23 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    role ENUM('admin', 'manager', 'member') DEFAULT 'member',
+    role ENUM('admin', 'manager', 'member', 'region_admin', 'citizen') DEFAULT 'member',
+    region_id VARCHAR(36),
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
+    FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE SET NULL,
+    
     INDEX idx_username (username),
     INDEX idx_email (email),
     INDEX idx_role (role),
+    INDEX idx_region (region_id),
     INDEX idx_active (is_active)
 );
 
--- Projects table with comprehensive project management
+-- Projects table with comprehensive project management and region support
 CREATE TABLE IF NOT EXISTS projects (
     id VARCHAR(36) PRIMARY KEY,
     code VARCHAR(50) UNIQUE NOT NULL,
@@ -39,17 +57,20 @@ CREATE TABLE IF NOT EXISTS projects (
     currency VARCHAR(3) DEFAULT 'USD',
     start_date DATE,
     end_date DATE,
+    region_id VARCHAR(36) NOT NULL,
     project_manager_id VARCHAR(36),
     created_by VARCHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
+    FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE RESTRICT,
     FOREIGN KEY (project_manager_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     
     INDEX idx_status (status),
     INDEX idx_priority (priority),
     INDEX idx_category (category),
+    INDEX idx_region (region_id),
     INDEX idx_manager (project_manager_id),
     INDEX idx_created_by (created_by),
     INDEX idx_dates (start_date, end_date)
@@ -87,16 +108,32 @@ CREATE TABLE IF NOT EXISTS tasks (
     assigned_to VARCHAR(36),
     due_date DATE,
     completed_at TIMESTAMP NULL,
+    parent_task_id VARCHAR(36),
+    progress_percentage DECIMAL(5,2) DEFAULT 0,
+    estimated_days INT,
+    estimated_duration_hours DECIMAL(8,2),
+    actual_duration_hours DECIMAL(8,2),
+    start_date DATE,
+    end_date DATE,
+    work_effort TEXT,
+    dependency VARCHAR(36),
+    dependency_type ENUM('FS', 'SS', 'FF', 'SF') DEFAULT 'FS',
+    lag_time INT DEFAULT 0,
+    risks TEXT,
+    issues TEXT,
+    comments TEXT,
     created_by VARCHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (schedule_id) REFERENCES project_schedules(id) ON DELETE CASCADE,
     FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (parent_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     
     INDEX idx_schedule (schedule_id),
     INDEX idx_assigned (assigned_to),
+    INDEX idx_parent (parent_task_id),
     INDEX idx_status (status),
     INDEX idx_priority (priority),
     INDEX idx_due_date (due_date)
@@ -227,6 +264,57 @@ CREATE TABLE IF NOT EXISTS project_permissions (
     INDEX idx_user (user_id),
     INDEX idx_permission (permission),
     INDEX idx_active (is_active)
+);
+
+-- Region content sections table for predefined page sections
+CREATE TABLE IF NOT EXISTS region_content_sections (
+    id VARCHAR(36) PRIMARY KEY,
+    region_id VARCHAR(36) NOT NULL,
+    section_type ENUM('about', 'contact', 'services', 'statistics', 'location', 'demographics', 'history', 'leadership', 'custom') NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    display_order INT DEFAULT 0,
+    is_visible BOOLEAN DEFAULT TRUE,
+    metadata JSON,
+    created_by VARCHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    
+    INDEX idx_region (region_id),
+    INDEX idx_section_type (section_type),
+    INDEX idx_display_order (display_order),
+    INDEX idx_visible (is_visible),
+    UNIQUE KEY unique_region_section_type (region_id, section_type)
+);
+
+-- Region notices/announcements table for public communication
+CREATE TABLE IF NOT EXISTS region_notices (
+    id VARCHAR(36) PRIMARY KEY,
+    region_id VARCHAR(36) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    category ENUM('general', 'project_update', 'public_meeting', 'emergency', 'maintenance') DEFAULT 'general',
+    priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+    is_published BOOLEAN DEFAULT TRUE,
+    published_at TIMESTAMP NULL,
+    expires_at TIMESTAMP NULL,
+    created_by VARCHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    
+    INDEX idx_region (region_id),
+    INDEX idx_category (category),
+    INDEX idx_priority (priority),
+    INDEX idx_published (is_published),
+    INDEX idx_published_at (published_at),
+    INDEX idx_expires_at (expires_at),
+    INDEX idx_created_at (created_at)
 );
 
 -- Create views for common queries

@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
+import { ScheduleService } from '../services/ScheduleService';
 import { databaseService } from '../database/connection';
 
 const createScheduleSchema = z.object({
@@ -22,16 +23,24 @@ const createTaskSchema = z.object({
   assignedTo: z.string().optional(),
   dueDate: z.string().date().optional(),
   estimatedDays: z.number().positive().optional(),
+  estimatedDurationHours: z.number().positive().optional(),
+  actualDurationHours: z.number().positive().optional(),
+  startDate: z.string().date().optional(),
+  endDate: z.string().date().optional(),
+  progressPercentage: z.number().min(0).max(100).optional(),
   workEffort: z.string().optional(),
   dependency: z.string().optional(),
   risks: z.string().optional(),
   issues: z.string().optional(),
   comments: z.string().optional(),
+  parentTaskId: z.string().optional(),
 });
 
 const updateTaskSchema = createTaskSchema.partial().omit({ scheduleId: true });
 
 export async function scheduleRoutes(fastify: FastifyInstance) {
+  const scheduleService = new ScheduleService();
+
   // Get schedules for a project
   fastify.get('/project/:projectId', {
     schema: {
@@ -71,12 +80,10 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { projectId } = request.params as { projectId: string };
-      
-      const schedules = await databaseService.query(
-        'SELECT * FROM project_schedules WHERE project_id = ? ORDER BY created_at DESC',
-        [projectId]
-      );
-      
+
+      // Use service instead of direct DB query
+      const schedules = await scheduleService.findByProjectId(projectId);
+
       return { schedules };
     } catch (error) {
       console.error('Get schedules error:', error);
@@ -129,66 +136,16 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
     try {
       const user = (request as any).user;
       const scheduleData = createScheduleSchema.parse(request.body);
-      
-      const scheduleId = crypto.randomUUID();
-      const createdBy = user?.userId || 'admin-001'; // Use admin user ID as fallback when no auth
-      
-      // Check if project exists, if not create it
-      const existingProject = await databaseService.query(
-        'SELECT id FROM projects WHERE id = ?',
-        [scheduleData.projectId]
-      );
-      
-      if (existingProject.length === 0) {
-        // Create the Dartmouth project if it doesn't exist
-        if (scheduleData.projectId === '3') {
-          await databaseService.query(
-            `INSERT INTO projects (id, code, name, description, status, priority, budget_allocated, budget_spent, currency, start_date, end_date, project_manager_id, created_by) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              '3',
-              'DES-2024',
-              'Dartmouth Essequibo School Construction',
-              'Construction of a new primary school in Dartmouth, Essequibo to serve the local community',
-              'planning',
-              'high',
-              2500000,
-              0,
-              'USD',
-              '2024-06-01',
-              '2025-12-31',
-              'admin-001',
-              'admin-001'
-            ]
-          );
-        } else {
-          return reply.status(400).send({
-            error: 'Project not found',
-            message: `Project with ID ${scheduleData.projectId} does not exist`,
-          });
-        }
-      }
-      
-      await databaseService.query(
-        `INSERT INTO project_schedules (id, project_id, name, description, start_date, end_date, created_by) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          scheduleId,
-          scheduleData.projectId,
-          scheduleData.name,
-          scheduleData.description || '',
-          scheduleData.startDate,
-          scheduleData.endDate,
-          createdBy,
-        ]
-      );
-      
-      const schedule = await databaseService.query(
-        'SELECT * FROM project_schedules WHERE id = ?',
-        [scheduleId]
-      );
-      
-      return reply.status(201).send({ schedule: schedule[0] });
+      const createdBy = user?.userId || 'admin-001';
+
+      const schedule = await scheduleService.create({
+        ...scheduleData,
+        startDate: new Date(scheduleData.startDate),
+        endDate: new Date(scheduleData.endDate),
+        createdBy
+      });
+
+      return reply.status(201).send({ schedule });
     } catch (error) {
       console.error('Create schedule error:', error);
       return reply.status(500).send({
@@ -200,11 +157,9 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
 
   // Update a schedule
   fastify.put('/:scheduleId', {
-    // preHandler: [authMiddleware], // Temporarily disabled for testing
     schema: {
       description: 'Update a schedule',
       tags: ['schedules'],
-      // security: [{ cookieAuth: [] }], // Temporarily disabled for testing
       params: {
         type: 'object',
         properties: {
@@ -226,40 +181,21 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
     try {
       const { scheduleId } = request.params as { scheduleId: string };
       const updateData = updateScheduleSchema.parse(request.body);
-      
-      const updateFields = [];
-      const updateValues = [];
-      
-      Object.entries(updateData).forEach(([key, value]) => {
-        if (value !== undefined) {
-          const dbKey = key === 'projectId' ? 'project_id' : 
-                       key === 'startDate' ? 'start_date' :
-                       key === 'endDate' ? 'end_date' : key;
-          updateFields.push(`${dbKey} = ?`);
-          updateValues.push(value);
-        }
+
+      const schedule = await scheduleService.update(scheduleId, {
+        ...updateData,
+        startDate: updateData.startDate ? new Date(updateData.startDate) : undefined,
+        endDate: updateData.endDate ? new Date(updateData.endDate) : undefined,
       });
-      
-      if (updateFields.length === 0) {
-        return reply.status(400).send({
-          error: 'Bad request',
-          message: 'No fields to update',
+
+      if (!schedule) {
+        return reply.status(404).send({
+          error: 'Not found',
+          message: 'Schedule not found'
         });
       }
-      
-      updateValues.push(scheduleId);
-      
-      await databaseService.query(
-        `UPDATE project_schedules SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        updateValues
-      );
-      
-      const schedule = await databaseService.query(
-        'SELECT * FROM project_schedules WHERE id = ?',
-        [scheduleId]
-      );
-      
-      return { schedule: schedule[0] };
+
+      return { schedule };
     } catch (error) {
       console.error('Update schedule error:', error);
       return reply.status(500).send({
@@ -284,12 +220,9 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { scheduleId } = request.params as { scheduleId: string };
-      
-      const tasks = await databaseService.query(
-        'SELECT * FROM tasks WHERE schedule_id = ? ORDER BY created_at ASC',
-        [scheduleId]
-      );
-      
+
+      const tasks = await scheduleService.findTasksByScheduleId(scheduleId);
+
       return { tasks };
     } catch (error) {
       console.error('Get tasks error:', error);
@@ -334,50 +267,19 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
     try {
       const user = (request as any).user;
       const { scheduleId } = request.params as { scheduleId: string };
-      
-      console.log('=== SERVER RECEIVED TASK DATA ===');
-      console.log('Request body:', JSON.stringify(request.body, null, 2));
-      console.log('Schedule ID:', scheduleId);
-      
-      let taskData;
-      try {
-        taskData = createTaskSchema.omit({ scheduleId: true }).parse(request.body);
-        console.log('Parsed task data:', JSON.stringify(taskData, null, 2));
-      } catch (validationError) {
-        console.error('=== VALIDATION ERROR ===');
-        console.error('Validation error:', validationError);
-        return reply.status(400).send({
-          success: false,
-          message: 'Invalid task data',
-          error: validationError
-        });
-      }
-      
-      const taskId = crypto.randomUUID();
-      const createdBy = user?.userId || 'admin-001'; // Use admin user ID as fallback when no auth
-      
-      await databaseService.query(
-        `INSERT INTO tasks (id, schedule_id, name, description, status, priority, assigned_to, due_date, created_by) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          taskId,
-          scheduleId,
-          taskData.name,
-          taskData.description || '',
-          taskData.status,
-          taskData.priority,
-          taskData.assignedTo || null,
-          taskData.dueDate || null,
-          createdBy,
-        ]
-      );
-      
-      const task = await databaseService.query(
-        'SELECT * FROM tasks WHERE id = ?',
-        [taskId]
-      );
-      
-      return reply.status(201).send({ task: task[0] });
+      const taskData = createTaskSchema.omit({ scheduleId: true }).parse(request.body);
+      const createdBy = user?.userId || 'admin-001';
+
+      const task = await scheduleService.createTask({
+        scheduleId,
+        ...taskData,
+        dueDate: taskData.dueDate ? new Date(taskData.dueDate) : undefined,
+        startDate: taskData.startDate ? new Date(taskData.startDate) : undefined,
+        endDate: taskData.endDate ? new Date(taskData.endDate) : undefined,
+        createdBy
+      });
+
+      return reply.status(201).send({ task });
     } catch (error) {
       console.error('Create task error:', error);
       return reply.status(500).send({
@@ -389,11 +291,9 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
 
   // Update a task
   fastify.put('/:scheduleId/tasks/:taskId', {
-    // preHandler: [authMiddleware], // Temporarily disabled for testing
     schema: {
       description: 'Update a task',
       tags: ['schedules'],
-      // security: [{ cookieAuth: [] }], // Temporarily disabled for testing
       params: {
         type: 'object',
         properties: {
@@ -423,39 +323,22 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
     try {
       const { taskId } = request.params as { taskId: string };
       const updateData = updateTaskSchema.parse(request.body);
-      
-      const updateFields = [];
-      const updateValues = [];
-      
-      Object.entries(updateData).forEach(([key, value]) => {
-        if (value !== undefined) {
-          const dbKey = key === 'assignedTo' ? 'assigned_to' : 
-                       key === 'dueDate' ? 'due_date' : key;
-          updateFields.push(`${dbKey} = ?`);
-          updateValues.push(value);
-        }
+
+      const task = await scheduleService.updateTask(taskId, {
+        ...updateData,
+        dueDate: updateData.dueDate ? new Date(updateData.dueDate) : undefined,
+        startDate: updateData.startDate ? new Date(updateData.startDate) : undefined,
+        endDate: updateData.endDate ? new Date(updateData.endDate) : undefined,
       });
-      
-      if (updateFields.length === 0) {
-        return reply.status(400).send({
-          error: 'Bad request',
-          message: 'No fields to update',
+
+      if (!task) {
+        return reply.status(404).send({
+          error: 'Not found',
+          message: 'Task not found'
         });
       }
-      
-      updateValues.push(taskId);
-      
-      await databaseService.query(
-        `UPDATE tasks SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        updateValues
-      );
-      
-      const task = await databaseService.query(
-        'SELECT * FROM tasks WHERE id = ?',
-        [taskId]
-      );
-      
-      return { task: task[0] };
+
+      return { task };
     } catch (error) {
       console.error('Update task error:', error);
       return reply.status(500).send({
@@ -488,19 +371,16 @@ export async function scheduleRoutes(fastify: FastifyInstance) {
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { scheduleId } = request.params as { scheduleId: string };
-      
-      // Delete all tasks first (due to foreign key constraint)
-      await databaseService.query(
-        'DELETE FROM tasks WHERE schedule_id = ?',
-        [scheduleId]
-      );
-      
-      // Delete the schedule
-      await databaseService.query(
-        'DELETE FROM project_schedules WHERE id = ?',
-        [scheduleId]
-      );
-      
+
+      const deleted = await scheduleService.delete(scheduleId);
+
+      if (!deleted) {
+        return reply.status(404).send({
+          error: 'Not found',
+          message: 'Schedule not found'
+        });
+      }
+
       return { message: 'Schedule deleted successfully' };
     } catch (error) {
       console.error('Delete schedule error:', error);

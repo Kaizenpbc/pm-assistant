@@ -236,6 +236,89 @@ class ApiService {
     const response = await this.api.post('/health/calculate', healthData);
     return response.data;
   }
+
+  // Notices endpoints
+  async getNotices(regionId: string) {
+    const response = await this.api.get(`/notices/region/${regionId}`);
+    return response.data;
+  }
+
+  async getAllNotices(regionId: string) {
+    const response = await this.api.get(`/notices/region/${regionId}/all`);
+    return response.data;
+  }
+
+  async createNotice(noticeData: {
+    regionId: string;
+    title: string;
+    content: string;
+    category?: string;
+    priority?: string;
+    expiresAt?: string;
+  }) {
+    const response = await this.api.post('/notices', noticeData);
+    return response.data;
+  }
+
+  async updateNotice(noticeId: string, noticeData: any) {
+    const response = await this.api.put(`/notices/${noticeId}`, noticeData);
+    return response.data;
+  }
+
+  async publishNotice(noticeId: string, isPublished: boolean) {
+    const response = await this.api.patch(`/notices/${noticeId}/publish`, { isPublished });
+    return response.data;
+  }
+
+  async deleteNotice(noticeId: string) {
+    const response = await this.api.delete(`/notices/${noticeId}`);
+    return response.data;
+  }
+
+  // Public project endpoints (for citizens)
+  async getProjectsByRegion(regionId: string) {
+    const response = await this.api.get(`/projects?regionId=${regionId}&public=true`);
+    return response.data;
+  }
+
+  // Region content section endpoints
+  async getRegionContent(regionId: string) {
+    const response = await this.api.get(`/region-content/region/${regionId}`);
+    return response.data;
+  }
+
+  async getAllRegionContent(regionId: string) {
+    const response = await this.api.get(`/region-content/region/${regionId}/all`);
+    return response.data;
+  }
+
+  async getRegionSection(regionId: string, sectionType: string) {
+    const response = await this.api.get(`/region-content/region/${regionId}/section/${sectionType}`);
+    return response.data;
+  }
+
+  async createOrUpdateSection(sectionData: {
+    regionId: string;
+    sectionType: string;
+    title: string;
+    content: string;
+    displayOrder?: number;
+    isVisible?: boolean;
+    metadata?: any;
+  }) {
+    const response = await this.api.post('/region-content', sectionData);
+    return response.data;
+  }
+
+  async updateSection(sectionId: string, sectionData: any) {
+    const response = await this.api.put(`/region-content/${sectionId}`, sectionData);
+    return response.data;
+  }
+
+  async deleteSection(sectionId: string) {
+    const response = await this.api.delete(`/region-content/${sectionId}`);
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

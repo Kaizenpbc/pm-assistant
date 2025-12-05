@@ -582,7 +582,7 @@ app.get('/api/v1/schedules/project/:projectId', async (req, res) => {
     
     // Query schedules from database
     const [rows] = await dbPool.execute(
-      'SELECT * FROM schedules WHERE project_id = ? ORDER BY created_at ASC',
+      'SELECT * FROM project_schedules WHERE project_id = ? ORDER BY created_at ASC',
       [projectId]
     );
     
@@ -616,14 +616,15 @@ app.post('/api/v1/schedules', async (req, res) => {
     
     // Insert schedule into database
     await dbPool.execute(
-      'INSERT INTO schedules (id, project_id, name, description, start_date, end_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      'INSERT INTO project_schedules (id, project_id, name, description, start_date, end_date, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
       [
         scheduleId,
         scheduleData.projectId,
         scheduleData.name || 'Project Schedule',
         scheduleData.description || 'Auto-generated schedule',
         startDate,
-        endDate
+        endDate,
+        'admin-001' // created_by
       ]
     );
     
@@ -665,7 +666,7 @@ app.put('/api/v1/schedules/:id', async (req, res) => {
     
     // Update schedule in database
     await dbPool.execute(
-      'UPDATE schedules SET name = ?, description = ?, start_date = ?, end_date = ?, updated_at = NOW() WHERE id = ?',
+      'UPDATE project_schedules SET name = ?, description = ?, start_date = ?, end_date = ?, updated_at = NOW() WHERE id = ?',
       [
         updateData.name || 'Project Schedule',
         updateData.description || 'Auto-generated schedule',
@@ -1043,7 +1044,7 @@ app.delete('/api/v1/schedules/:id', async (req, res) => {
     console.log('✅ Tasks deleted for schedule:', id);
     
     // Delete the schedule
-    const [result] = await dbPool.execute('DELETE FROM schedules WHERE id = ?', [id]);
+    const [result] = await dbPool.execute('DELETE FROM project_schedules WHERE id = ?', [id]);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({

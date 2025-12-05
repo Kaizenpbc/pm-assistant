@@ -16,9 +16,12 @@ services:
       DB_USER: root
       DB_PASSWORD: rootpassword
       DB_NAME: pm_application_v2
-      JWT_SECRET: SO8ZTe1/iIb3t/lKXwgAScQDdQER04lUVeqTJQyL5JI=
-      JWT_REFRESH_SECRET: vPX2A7E94LJSu9AN0WobnlXYmVzIXMglQV/anoJVKdM=
-      COOKIE_SECRET: s1BJ4NCo3fWo0enVhWbyk2nhIt3NIxkdUXb7/JWn0V4=
+      # Secrets should be provided via .env file or environment variables
+      # Generate secrets using: npm run config:generate-secrets
+      # NEVER commit secrets to version control
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_GENERATE_WITH_NPM_RUN_CONFIG_GENERATE_SECRETS}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-CHANGE_ME_GENERATE_WITH_NPM_RUN_CONFIG_GENERATE_SECRETS}
+      COOKIE_SECRET: ${COOKIE_SECRET:-CHANGE_ME_GENERATE_WITH_NPM_RUN_CONFIG_GENERATE_SECRETS}
       CORS_ORIGIN: http://localhost:5173
       LOG_LEVEL: debug
     ports:

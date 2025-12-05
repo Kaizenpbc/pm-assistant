@@ -636,7 +636,7 @@ const ProjectPlanningTemplates: React.FC<ProjectPlanningTemplatesProps> = ({
 
   if (!selectedTemplate) {
     return (
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="w-full">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">🏗️ Guyana Project Templates</h2>
           <p className="text-gray-600">Choose from our comprehensive project templates designed for Guyana's infrastructure and development needs.</p>
@@ -702,7 +702,7 @@ const ProjectPlanningTemplates: React.FC<ProjectPlanningTemplatesProps> = ({
   const TemplateIcon = selectedTemplate.icon;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="w-full">
       <div className="mb-8">
         <div className="flex items-center mb-4">
           <button

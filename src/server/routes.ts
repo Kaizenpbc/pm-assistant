@@ -8,6 +8,8 @@ import { versionRoutes } from './routes/version';
 import { healthRoutes } from './routes/health';
 import { systemHealthRoutes } from './routes/systemHealth';
 import { performanceMonitoringRoutes } from './routes/performanceMonitoring';
+import { noticeRoutes } from './routes/notices';
+import { regionContentRoutes } from './routes/regionContent';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // API routes
@@ -17,6 +19,8 @@ export async function registerRoutes(fastify: FastifyInstance) {
   await fastify.register(scheduleRoutes, { prefix: '/api/v1/schedules' });
   await fastify.register(aiSchedulingRoutes, { prefix: '/api/v1/ai-scheduling' });
   await fastify.register(healthRoutes, { prefix: '/api/v1/health' });
+  await fastify.register(noticeRoutes, { prefix: '/api/v1/notices' });
+  await fastify.register(regionContentRoutes, { prefix: '/api/v1/region-content' });
   await fastify.register(versionRoutes, { prefix: '/api/v1' });
   await fastify.register(performanceMonitoringRoutes, { prefix: '/api/v1' });
   

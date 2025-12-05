@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectPage } from './pages/ProjectPage';
 import SchedulePage from './pages/SchedulePage';
 import MonitoringPage from './pages/MonitoringPage';
+import { RegionInfoPage } from './pages/RegionInfoPage';
+import { RegionNoticesPage } from './pages/RegionNoticesPage';
+import { RegionAdminDashboard } from './pages/RegionAdminDashboard';
+import { RegionSectionEditor } from './pages/RegionSectionEditor';
 import PerformanceDashboard from './components/PerformanceDashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingSpinner } from './components/LoadingSpinner';
@@ -129,9 +134,31 @@ function App() {
                   element={<ShareTargetHandler />} 
                 />
                 <Route 
+                  path="/region/:regionId/info" 
+                  element={<RegionInfoPage />} 
+                />
+                <Route 
+                  path="/region/notices" 
+                  element={
+                    isAuthenticated ? <RegionNoticesPage /> : <Navigate to="/login" replace />
+                  } 
+                />
+                <Route 
+                  path="/region/admin" 
+                  element={
+                    isAuthenticated ? <RegionAdminDashboard /> : <Navigate to="/login" replace />
+                  } 
+                />
+                <Route 
+                  path="/region/admin/sections/:sectionType" 
+                  element={
+                    isAuthenticated ? <RegionSectionEditor /> : <Navigate to="/login" replace />
+                  } 
+                />
+                <Route 
                   path="/" 
                   element={
-                    isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+                    isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />
                   } 
                 />
               </Routes>
