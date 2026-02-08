@@ -367,6 +367,33 @@ class ApiService {
     const response = await this.api.delete(`/region-content/${sectionId}`);
     return response.data;
   }
+
+  // Prediction endpoints
+  async getDashboardPredictions(regionId?: string) {
+    const params = regionId ? `?regionId=${regionId}` : '';
+    const response = await this.api.get(`/predictions/dashboard${params}`);
+    return response.data;
+  }
+
+  async getProjectRisks(projectId: string) {
+    const response = await this.api.get(`/predictions/project/${projectId}/risks`);
+    return response.data;
+  }
+
+  async getProjectWeatherImpact(projectId: string) {
+    const response = await this.api.get(`/predictions/project/${projectId}/weather`);
+    return response.data;
+  }
+
+  async getProjectBudgetForecast(projectId: string) {
+    const response = await this.api.get(`/predictions/project/${projectId}/budget`);
+    return response.data;
+  }
+
+  async getProjectPredictiveHealth(projectId: string) {
+    const response = await this.api.get(`/predictions/project/${projectId}/health`);
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

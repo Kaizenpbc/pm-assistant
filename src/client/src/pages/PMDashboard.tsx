@@ -1,0 +1,103 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { AISummaryBanner } from '../components/dashboard/AISummaryBanner';
+import { PredictionCards } from '../components/dashboard/PredictionCards';
+import { ProjectCardGrid, type ProjectCardData } from '../components/dashboard/ProjectCardGrid';
+import { AlertBanner } from '../components/notifications/AlertBanner';
+import ProjectCreationModal from '../components/ProjectCreationModal';
+import { useUIStore } from '../stores/uiStore';
+import { apiService } from '../services/api';
+
+export function PMDashboard() {
+  const navigate = useNavigate();
+  const { setAIPanelContext } = useUIStore();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const { data: projectsData, isLoading } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => apiService.getProjects(),
+  });
+
+  const { data: predictionsData, isLoading: isPredictionsLoading } = useQuery({
+    queryKey: ['dashboard-predictions'],
+    queryFn: () => apiService.getDashboardPredictions(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Set AI panel context to dashboard
+  React.useEffect(() => {
+    setAIPanelContext({ type: 'dashboard' });
+  }, [setAIPanelContext]);
+
+  const predictions = predictionsData?.data;
+  const healthMap = new Map<string, { healthScore: number; riskLevel: string }>();
+  if (predictions?.projectHealthScores) {
+    for (const ph of predictions.projectHealthScores) {
+      healthMap.set(ph.projectId, { healthScore: ph.healthScore, riskLevel: ph.riskLevel });
+    }
+  }
+
+  const projects: ProjectCardData[] = (projectsData?.data || []).map((p: any) => {
+    const health = healthMap.get(p.id);
+    return {
+      id: p.id,
+      code: p.code,
+      name: p.name,
+      description: p.description,
+      status: p.status,
+      priority: p.priority,
+      budgetAllocated: p.budget_allocated || p.budgetAllocated,
+      budgetSpent: p.budget_spent || p.budgetSpent,
+      progress: p.progress_percentage || p.progress || 0,
+      startDate: p.start_date || p.startDate,
+      endDate: p.end_date || p.endDate,
+      region: p.region_name,
+      riskLevel: health?.riskLevel as ProjectCardData['riskLevel'],
+      aiHealthScore: health?.healthScore,
+    };
+  });
+
+  function handleProjectClick(projectId: string) {
+    navigate(`/project/${projectId}`);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Critical Alert Banner */}
+      <AlertBanner />
+
+      {/* AI Summary */}
+      <AISummaryBanner
+        isLoading={isLoading || isPredictionsLoading}
+        summary={predictions?.summary}
+        highlights={predictions?.highlights}
+      />
+
+      {/* Prediction Cards */}
+      <PredictionCards
+        risks={predictions?.risks ?? { critical: 0, high: 0, medium: 0 }}
+        weather={predictions?.weather}
+        budget={predictions?.budget ?? {
+          overBudget: projects.filter(p => p.budgetAllocated && p.budgetSpent && p.budgetSpent > p.budgetAllocated * 0.9).length,
+          onTrack: projects.length - projects.filter(p => p.budgetAllocated && p.budgetSpent && p.budgetSpent > p.budgetAllocated * 0.9).length,
+        }}
+      />
+
+      {/* Project Grid */}
+      <ProjectCardGrid
+        projects={projects}
+        onProjectClick={handleProjectClick}
+        onCreateProject={() => setShowCreateModal(true)}
+        isLoading={isLoading}
+      />
+
+      {/* Project Creation Modal */}
+      <ProjectCreationModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreateProject={() => setShowCreateModal(false)}
+      />
+    </div>
+  );
+}
