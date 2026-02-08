@@ -1,8 +1,15 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { AIChatService } from '../services/aiChatService';
+import { AIProjectCreatorService } from '../services/aiProjectCreator';
+import { claudeService, promptTemplates } from '../services/claudeService';
+import { AIMeetingExtractionSchema } from '../schemas/aiSchemas';
+import { ScheduleService } from '../services/ScheduleService';
+import { logAIUsage } from '../services/aiUsageLogger';
 
 export async function aiChatRoutes(fastify: FastifyInstance) {
   const chatService = new AIChatService(fastify);
+  const projectCreator = new AIProjectCreatorService(fastify);
+  const scheduleService = new ScheduleService();
 
   // -----------------------------------------------------------------------
   // POST /message — non-streaming chat
@@ -208,6 +215,159 @@ export async function aiChatRoutes(fastify: FastifyInstance) {
         fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Failed to delete conversation');
         return reply.code(500).send({
           error: 'Failed to delete conversation',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    },
+  });
+
+  // -----------------------------------------------------------------------
+  // POST /create-project — create project from natural language description
+  // -----------------------------------------------------------------------
+  fastify.post('/create-project', {
+    schema: {
+      description: 'Create a project from a natural language description',
+      tags: ['ai-chat'],
+      body: {
+        type: 'object',
+        required: ['description'],
+        properties: {
+          description: { type: 'string', minLength: 10 },
+        },
+      },
+    },
+    handler: async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = request.body as any;
+        const user = (request as any).user || {};
+
+        const result = await projectCreator.createProjectFromDescription(
+          body.description,
+          user.userId || 'anonymous',
+        );
+
+        return {
+          project: result.project,
+          schedule: result.schedule,
+          tasks: result.tasks,
+          analysis: result.analysis,
+          aiPowered: result.aiPowered,
+        };
+      } catch (error) {
+        fastify.log.error(
+          { err: error instanceof Error ? error : new Error(String(error)) },
+          'NL project creation failed',
+        );
+        return reply.code(500).send({
+          error: 'Failed to create project from description',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    },
+  });
+
+  // -----------------------------------------------------------------------
+  // POST /extract-tasks — extract tasks from meeting notes
+  // -----------------------------------------------------------------------
+  fastify.post('/extract-tasks', {
+    schema: {
+      description: 'Extract tasks and action items from meeting notes',
+      tags: ['ai-chat'],
+      body: {
+        type: 'object',
+        required: ['meetingNotes'],
+        properties: {
+          meetingNotes: { type: 'string', minLength: 10 },
+          projectId: { type: 'string' },
+          scheduleId: { type: 'string' },
+        },
+      },
+    },
+    handler: async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = request.body as any;
+        const user = (request as any).user || {};
+        const userId = user.userId || 'anonymous';
+
+        if (!claudeService.isAvailable()) {
+          return reply.code(503).send({
+            error: 'AI features are currently disabled',
+            message: 'Meeting notes extraction requires AI to be enabled.',
+            aiPowered: false,
+          });
+        }
+
+        let additionalContext = '';
+        if (body.projectId) {
+          additionalContext = `This meeting is related to project ID: ${body.projectId}`;
+        }
+
+        const systemPrompt = promptTemplates.meetingNotesExtraction.render({
+          meetingNotes: body.meetingNotes,
+          additionalContext,
+        });
+
+        const result = await claudeService.completeWithJsonSchema({
+          systemPrompt,
+          userMessage:
+            'Extract all action items, decisions, tasks, and follow-ups from these meeting notes. Return valid JSON matching the requested schema.',
+          schema: AIMeetingExtractionSchema,
+          temperature: 0.2,
+        });
+
+        logAIUsage(fastify, {
+          userId,
+          feature: 'meeting-extraction',
+          model: 'claude',
+          usage: result.usage,
+          latencyMs: result.latencyMs,
+          success: true,
+          requestContext: { projectId: body.projectId, scheduleId: body.scheduleId },
+        });
+
+        // If a scheduleId is provided, create the extracted tasks in that schedule
+        let createdTasks: any[] = [];
+        if (body.scheduleId && result.data.tasks.length > 0) {
+          for (const task of result.data.tasks) {
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + (task.estimatedDays || 7));
+
+            const created = await scheduleService.createTask({
+              scheduleId: body.scheduleId,
+              name: task.name,
+              description: task.description,
+              priority: (task.priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium',
+              estimatedDays: task.estimatedDays,
+              dueDate,
+              createdBy: userId,
+            });
+            createdTasks.push(created);
+          }
+        }
+
+        return {
+          extraction: result.data,
+          createdTasks,
+          aiPowered: true,
+        };
+      } catch (error) {
+        fastify.log.error(
+          { err: error instanceof Error ? error : new Error(String(error)) },
+          'Meeting extraction failed',
+        );
+
+        logAIUsage(fastify, {
+          userId: ((request as any).user || {}).userId || 'anonymous',
+          feature: 'meeting-extraction',
+          model: 'claude',
+          usage: { inputTokens: 0, outputTokens: 0 },
+          latencyMs: 0,
+          success: false,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
+
+        return reply.code(500).send({
+          error: 'Failed to extract tasks from meeting notes',
           message: error instanceof Error ? error.message : 'Unknown error',
         });
       }

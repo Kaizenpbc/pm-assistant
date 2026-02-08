@@ -258,6 +258,37 @@ class ApiService {
     return response.data;
   }
 
+  // NL Project Creation
+  async createProjectFromChat(description: string) {
+    const response = await this.api.post('/ai-chat/create-project', { description });
+    return response.data;
+  }
+
+  // Meeting Notes Extraction
+  async extractTasksFromNotes(meetingNotes: string, projectId?: string, scheduleId?: string) {
+    const response = await this.api.post('/ai-chat/extract-tasks', {
+      meetingNotes,
+      projectId,
+      scheduleId,
+    });
+    return response.data;
+  }
+
+  // AI Report Generation
+  async generateReport(reportType: string, projectId?: string, regionId?: string) {
+    const response = await this.api.post('/ai-reports/generate', {
+      reportType,
+      projectId,
+      regionId,
+    });
+    return response.data;
+  }
+
+  async getReportHistory() {
+    const response = await this.api.get('/ai-reports/history');
+    return response.data;
+  }
+
   // Health scoring endpoints
   async getProjectHealth(projectId: string) {
     const response = await this.api.get(`/health/${projectId}`);

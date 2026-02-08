@@ -128,3 +128,44 @@ export const AIProjectInsightsSchema = z.object({
 });
 
 export type AIProjectInsights = z.infer<typeof AIProjectInsightsSchema>;
+
+// ---------------------------------------------------------------------------
+// Meeting Notes Extraction
+// ---------------------------------------------------------------------------
+
+export const AIMeetingExtractionSchema = z.object({
+  summary: z.string(),
+  actionItems: z.array(
+    z.object({
+      description: z.string(),
+      assignee: z.string().optional(),
+      dueDate: z.string().optional(),
+      priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+    }),
+  ),
+  decisions: z.array(
+    z.object({
+      description: z.string(),
+      madeBy: z.string().optional(),
+    }),
+  ),
+  tasks: z.array(
+    z.object({
+      name: z.string(),
+      description: z.string(),
+      estimatedDays: z.number().optional(),
+      priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+      assignedTo: z.string().optional(),
+      category: z.string().optional(),
+    }),
+  ),
+  followUps: z.array(
+    z.object({
+      description: z.string(),
+      responsible: z.string().optional(),
+      deadline: z.string().optional(),
+    }),
+  ),
+});
+
+export type AIMeetingExtraction = z.infer<typeof AIMeetingExtractionSchema>;
