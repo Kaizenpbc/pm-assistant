@@ -7,6 +7,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { config } from './config';
 import { requestLogger } from './utils/logger';
+import { toCamelCaseKeys } from './utils/caseConverter';
 import { auditService } from './services/auditService';
 import { securityMiddleware, securityValidationMiddleware } from './middleware/securityMiddleware';
 
@@ -17,6 +18,14 @@ export async function registerPlugins(fastify: FastifyInstance) {
   // Security middleware
   fastify.addHook('onRequest', securityMiddleware);
   fastify.addHook('preHandler', securityValidationMiddleware);
+
+  // Normalize DB snake_case keys to camelCase in all JSON responses
+  fastify.addHook('preSerialization', async (_request, _reply, payload) => {
+    if (payload && typeof payload === 'object') {
+      return toCamelCaseKeys(payload);
+    }
+    return payload;
+  });
 
   // Security
   await fastify.register(helmet, {
