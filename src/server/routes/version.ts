@@ -32,7 +32,7 @@ export async function versionRoutes(fastify: FastifyInstance) {
 
       reply.code(200).send(validatedVersion);
     } catch (error) {
-      fastify.log.error('Error getting version info:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error getting version info');
       reply.code(500).send({
         error: 'Failed to get version information',
         message: error instanceof Error ? error.message : 'Unknown error'
@@ -57,7 +57,7 @@ export async function versionRoutes(fastify: FastifyInstance) {
         timestamp: Date.now()
       });
     } catch (error) {
-      fastify.log.error('Error checking version:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error checking version');
       reply.code(500).send({
         error: 'Failed to check version',
         message: error instanceof Error ? error.message : 'Unknown error'
@@ -85,7 +85,7 @@ export async function versionRoutes(fastify: FastifyInstance) {
 
       reply.code(200).send(updateManifest);
     } catch (error) {
-      fastify.log.error('Error getting update manifest:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error getting update manifest');
       reply.code(500).send({
         error: 'Failed to get update manifest',
         message: error instanceof Error ? error.message : 'Unknown error'

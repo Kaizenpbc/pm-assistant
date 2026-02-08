@@ -55,7 +55,7 @@ export const ShareTargetHandler: React.FC<ShareTargetHandlerProps> = ({
         setSharedContent(content);
         onSharedContent?.(content);
         
-        toastService.success('Content received successfully!');
+        toastService.success('Success', 'Content received successfully!');
         
         // Navigate to dashboard after a short delay
         setTimeout(() => {
@@ -67,7 +67,7 @@ export const ShareTargetHandler: React.FC<ShareTargetHandlerProps> = ({
       }
     } catch (error) {
       console.error('Error handling shared content:', error);
-      toastService.error('Failed to process shared content');
+      toastService.error('Error', 'Failed to process shared content');
       navigate('/dashboard');
     } finally {
       setIsProcessing(false);

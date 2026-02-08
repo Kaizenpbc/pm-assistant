@@ -3,7 +3,8 @@ export interface User {
   username: string;
   email: string;
   fullName: string;
-  role: 'admin' | 'manager' | 'user';
+  role: 'admin' | 'manager' | 'user' | 'region_admin' | 'citizen';
+  region_id?: string | null;
 }
 
 export interface Project {
@@ -11,6 +12,7 @@ export interface Project {
   name: string;
   description?: string;
   category?: string;
+  code?: string;
   status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   budgetAllocated?: number;

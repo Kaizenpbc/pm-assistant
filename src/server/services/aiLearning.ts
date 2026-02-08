@@ -42,10 +42,10 @@ export class AILearningService {
       
       // Generate insights after recording feedback
       const insights = await this.generateInsights();
-      this.fastify.log.info('AI Learning insights updated:', insights);
+      this.fastify.log.info({ insights }, 'AI Learning insights updated');
       
     } catch (error) {
-      this.fastify.log.error('Error recording AI learning feedback:', error);
+      this.fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error recording AI learning feedback');
     }
   }
 
@@ -118,7 +118,8 @@ export class AILearningService {
       insights.projectTypeAccuracy[type] = accuracy;
     });
 
-    // Calculate task estimation accuracy
+    // Calculate task estimation accuracy (use temp arrays, then convert to averages)
+    const taskEstimationAcc: Record<string, number[]> = {};
     this.learningData.forEach(data => {
       if (data.userFeedback.actualDurations) {
         data.generatedTasks.forEach(task => {
@@ -126,22 +127,19 @@ export class AILearningService {
           const actualDuration = data.userFeedback.actualDurations![task.id];
           if (actualDuration) {
             const accuracy = 1 - Math.abs(task.estimatedDays - actualDuration) / task.estimatedDays;
-            if (!insights.taskEstimationAccuracy[categoryKey]) {
-              insights.taskEstimationAccuracy[categoryKey] = [];
-            }
-            insights.taskEstimationAccuracy[categoryKey].push(accuracy);
+            if (!taskEstimationAcc[categoryKey]) taskEstimationAcc[categoryKey] = [];
+            taskEstimationAcc[categoryKey].push(accuracy);
           }
         });
       }
     });
-
-    // Convert arrays to averages
-    Object.keys(insights.taskEstimationAccuracy).forEach(key => {
-      const values = insights.taskEstimationAccuracy[key] as any[];
+    Object.keys(taskEstimationAcc).forEach(key => {
+      const values = taskEstimationAcc[key];
       insights.taskEstimationAccuracy[key] = values.reduce((a, b) => a + b, 0) / values.length;
     });
 
     // Calculate complexity accuracy
+    const complexityAcc: Record<string, number[]> = {};
     this.learningData.forEach(data => {
       if (data.userFeedback.actualComplexities) {
         data.generatedTasks.forEach(task => {
@@ -149,18 +147,14 @@ export class AILearningService {
           const actualComplexity = data.userFeedback.actualComplexities![task.id];
           if (actualComplexity) {
             const isCorrect = task.complexity === actualComplexity;
-            if (!insights.complexityAccuracy[complexityKey]) {
-              insights.complexityAccuracy[complexityKey] = [];
-            }
-            insights.complexityAccuracy[complexityKey].push(isCorrect ? 1 : 0);
+            if (!complexityAcc[complexityKey]) complexityAcc[complexityKey] = [];
+            complexityAcc[complexityKey].push(isCorrect ? 1 : 0);
           }
         });
       }
     });
-
-    // Convert arrays to averages
-    Object.keys(insights.complexityAccuracy).forEach(key => {
-      const values = insights.complexityAccuracy[key] as any[];
+    Object.keys(complexityAcc).forEach(key => {
+      const values = complexityAcc[key];
       insights.complexityAccuracy[key] = values.reduce((a, b) => a + b, 0) / values.length;
     });
 

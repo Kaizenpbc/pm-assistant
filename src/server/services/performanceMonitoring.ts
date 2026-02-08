@@ -246,7 +246,7 @@ class PerformanceMonitoringService {
       this.cleanupOldMetrics();
 
     } catch (error) {
-      this.fastify.log.error('Error collecting performance metrics:', error);
+      this.fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error collecting performance metrics');
     }
   }
 

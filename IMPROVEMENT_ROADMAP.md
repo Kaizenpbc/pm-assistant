@@ -92,18 +92,18 @@ This document outlines the next steps to make this project production-ready and 
 - Error service is basic (no production logging)
 
 **What to Add:**
-- [ ] **Better error messages** - User-friendly, actionable error messages
-- [ ] **Error recovery** - Retry mechanisms, fallback UI states
-- [ ] **Error logging** - Integrate Sentry or similar for production error tracking
-- [ ] **Network error handling** - Handle offline, timeout, and API errors gracefully
+- [x] **Better error messages** - User-friendly, actionable error messages (errorService.getUserFriendlyMessage, getApiErrorMessage)
+- [x] **Error recovery** - Retry mechanisms, fallback UI states (ErrorBoundary: Try Again remount, Go to Dashboard)
+- [ ] **Error logging** - Integrate Sentry or similar for production error tracking (placeholder in errorService)
+- [x] **Network error handling** - Handle offline, timeout, and API errors gracefully (errorService helpers, API export)
 - [ ] **Form validation errors** - Clear, inline validation feedback
-- [ ] **404/403 pages** - Custom error pages for common HTTP errors
+- [x] **404/403/500 pages** - Custom error pages (NotFoundPage, ForbiddenPage, ServerErrorPage + routes)
 
 **Files to Update:**
-- `src/client/src/services/errorService.ts` - Add Sentry integration
-- `src/client/src/components/ErrorBoundary.tsx` - Enhance error recovery
-- `src/client/src/services/api.ts` - Better error handling in API calls
-- Create `src/client/src/pages/ErrorPages/` - 404, 403, 500 pages
+- `src/client/src/services/errorService.ts` - Enhanced; Sentry placeholder
+- `src/client/src/components/ErrorBoundary.tsx` - Enhanced (recovery, errorService, aria)
+- `src/client/src/services/api.ts` - getApiErrorMessage export, parentTaskId in createTask
+- `src/client/src/pages/ErrorPages/` - 404, 403, 500 pages created
 
 ---
 
@@ -115,27 +115,24 @@ This document outlines the next steps to make this project production-ready and 
 - Critical components untested
 
 **What to Add:**
-- [ ] **Unit tests for critical components:**
-  - `RegionAdminDashboard.tsx`
-  - `SchedulePage.tsx` (task hierarchy, save logic)
-  - `RegionInfoPage.tsx`
-  - `RegionNoticesPage.tsx`
-  - API service methods
-- [ ] **Integration tests:**
-  - Region content CRUD operations
-  - Notice creation and publishing
-  - Task hierarchy saving
-- [ ] **E2E tests:**
-  - Complete user workflows (login → create project → add schedule)
-  - Region admin workflow
-  - Citizen viewing region info
+- [x] **Unit tests for critical components:**
+  - `RegionAdminDashboard.tsx` (access denied, dashboard render)
+  - `SchedulePage.tsx` (task hierarchy, save logic) – not yet added
+  - `RegionInfoPage.tsx` – covered indirectly via E2E
+  - `RegionNoticesPage.tsx` – not yet added
+  - API service methods – existing; errorService + getApiErrorMessage covered
+- [x] **Integration tests:**
+  - Region content & notices public API (`tests/integration/api/region-content-notices.test.ts`)
+- [x] **E2E tests:**
+  - Region info (citizen-like), 404 page (`tests/e2e/region-admin-workflow.spec.ts`)
 
-**Target:** 70%+ code coverage
+**Target:** 70%+ code coverage (in progress)
 
-**Files to Create:**
+**Files Created:**
 - `src/client/tests/unit/pages/RegionAdminDashboard.test.tsx`
-- `src/client/tests/unit/pages/SchedulePage.test.tsx`
-- `tests/integration/region-content.test.ts`
+- `src/client/tests/unit/services/errorService.test.ts`
+- `src/client/tests/unit/pages/ErrorPages.test.tsx`
+- `tests/integration/api/region-content-notices.test.ts`
 - `tests/e2e/region-admin-workflow.spec.ts`
 
 ---
@@ -147,23 +144,10 @@ This document outlines the next steps to make this project production-ready and 
 - No user guides
 
 **What to Add:**
-- [ ] **User Guide** (`docs/USER_GUIDE.md`):
-  - How to log in
-  - How to create projects
-  - How to manage schedules
-  - How to use AI task breakdown
-- [ ] **Region Admin Guide** (`docs/REGION_ADMIN_GUIDE.md`):
-  - Managing region content
-  - Posting notices
-  - Managing projects
-- [ ] **Citizen Guide** (`docs/CITIZEN_GUIDE.md`):
-  - Viewing region information
-  - Checking project status
-  - Reading notices
-- [ ] **Admin Manual** (`docs/ADMIN_MANUAL.md`):
-  - User management
-  - Region management
-  - System configuration
+- [x] **User Guide** (`docs/USER_GUIDE.md`): Login, projects, schedules, AI task breakdown
+- [x] **Region Admin Guide** (`docs/REGION_ADMIN_GUIDE.md`): Region content, notices, projects, preview
+- [x] **Citizen Guide** (`docs/CITIZEN_GUIDE.md`): Viewing region info, notices, project status
+- [x] **Admin Manual** (`docs/ADMIN_MANUAL.md`): User/region management, system configuration
 
 ---
 

@@ -1,79 +1,56 @@
-import React, { useEffect, useState } from 'react';
-
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+
+// Layout
+import AppLayout from './components/layout/AppLayout';
+
+// Pages
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { ProjectPage } from './pages/ProjectPage';
+import { DashboardRouter } from './pages/DashboardRouter';
+import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import SchedulePage from './pages/SchedulePage';
+import { ReportsPage } from './pages/ReportsPage';
 import MonitoringPage from './pages/MonitoringPage';
+import PerformanceDashboard from './components/PerformanceDashboard';
 import { RegionInfoPage } from './pages/RegionInfoPage';
 import { RegionNoticesPage } from './pages/RegionNoticesPage';
 import { RegionAdminDashboard } from './pages/RegionAdminDashboard';
 import { RegionSectionEditor } from './pages/RegionSectionEditor';
-import PerformanceDashboard from './components/PerformanceDashboard';
+import { NotFoundPage, ForbiddenPage, ServerErrorPage } from './pages/ErrorPages';
+
+// Components
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingSpinner } from './components/LoadingSpinner';
-import AppLoadingWrapper from './components/AppLoadingWrapper';
-import MonitoringDashboard from './components/MonitoringDashboard';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
-import { ToastManager } from './components/ToastNotification';
-import { toastService } from './services/toastService';
+import ShareTargetHandler from './components/ShareTargetHandler';
+
+// Services
 import { logDeploymentInfo } from './utils/buildUtils';
 import { securityService } from './services/securityService';
 import { indexedDBService } from './services/indexedDBService';
-import { backgroundSyncService } from './services/backgroundSyncService';
 import { accessibilityService } from './services/accessibilityService';
-import AppShell from './components/AppShell';
-import ShareTargetHandler from './components/ShareTargetHandler';
+
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuthStore();
+  return isAuthenticated ? <AppLayout>{children}</AppLayout> : <Navigate to="/login" replace />;
+}
 
 function App() {
-  const { isAuthenticated, isLoading, setLoading, logout } = useAuthStore();
-  const [toasts, setToasts] = useState(toastService.getToasts());
+  const { isAuthenticated, isLoading, setLoading } = useAuthStore();
 
-  // Initialize auth state
   useEffect(() => {
-    // Set loading to false after a short delay to allow hydration
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 100);
-
+    const timer = setTimeout(() => setLoading(false), 100);
     return () => clearTimeout(timer);
   }, [setLoading]);
 
-  // Subscribe to toast changes
-  useEffect(() => {
-    const unsubscribe = toastService.subscribe(setToasts);
-    return unsubscribe;
-  }, []);
+  useEffect(() => { logDeploymentInfo(); }, []);
+  useEffect(() => { securityService.logSecurityInfo(); }, []);
 
-  // Log deployment information for debugging
-  useEffect(() => {
-    logDeploymentInfo();
-  }, []);
-
-  // Log security information for debugging
-  useEffect(() => {
-    securityService.logSecurityInfo();
-  }, []);
-
-  // Initialize accessibility features
   useEffect(() => {
     accessibilityService.setupSkipLinks();
     accessibilityService.announce('PM Application loaded successfully');
-    
-    // Initialize IndexedDB and background sync
-    const initializeServices = async () => {
-      try {
-        await indexedDBService.initialize();
-        console.log('✅ IndexedDB and background sync services initialized');
-      } catch (error) {
-        console.error('❌ Failed to initialize services:', error);
-      }
-    };
-    
-    initializeServices();
+    indexedDBService.initialize().catch(console.error);
   }, []);
 
   if (isLoading) {
@@ -82,99 +59,39 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AppLoadingWrapper fallbackMessage="Loading your project management workspace...">
-        <Router>
-          <AppShell>
-            <div className="min-h-screen bg-gray-50">
-              <Routes>
-                <Route 
-                  path="/login" 
-                  element={
-                    isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
-                  } 
-                />
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    isAuthenticated ? <DashboardPage /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/project/:id" 
-                  element={
-                    isAuthenticated ? <ProjectPage /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/project/:id/schedule" 
-                  element={
-                    isAuthenticated ? <SchedulePage /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/schedule/:projectId" 
-                  element={
-                    isAuthenticated ? <SchedulePage /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/monitoring" 
-                  element={
-                    isAuthenticated ? <MonitoringPage /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/performance" 
-                  element={
-                    isAuthenticated ? <PerformanceDashboard /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/share-target" 
-                  element={<ShareTargetHandler />} 
-                />
-                <Route 
-                  path="/region/:regionId/info" 
-                  element={<RegionInfoPage />} 
-                />
-                <Route 
-                  path="/region/notices" 
-                  element={
-                    isAuthenticated ? <RegionNoticesPage /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/region/admin" 
-                  element={
-                    isAuthenticated ? <RegionAdminDashboard /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/region/admin/sections/:sectionType" 
-                  element={
-                    isAuthenticated ? <RegionSectionEditor /> : <Navigate to="/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/" 
-                  element={
-                    isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />
-                  } 
-                />
-              </Routes>
-              
-              {/* PWA Install Prompt */}
-              <PWAInstallPrompt />
-              
-              {/* Toast Notifications */}
-              <ToastManager 
-                toasts={toasts} 
-                onRemoveToast={(id) => toastService.removeToast(id)} 
-              />
-            </div>
-          </AppShell>
-        </Router>
-      </AppLoadingWrapper>
+      <Router>
+        <Routes>
+          {/* Public routes - no layout wrapper */}
+          <Route
+            path="/login"
+            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+          />
+          <Route
+            path="/"
+            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
+          />
+          <Route path="/region/:regionId/info" element={<RegionInfoPage />} />
+          <Route path="/share-target" element={<ShareTargetHandler />} />
+
+          {/* Protected routes - wrapped in AppLayout */}
+          <Route path="/dashboard" element={<PrivateRoute><DashboardRouter /></PrivateRoute>} />
+          <Route path="/project/:id" element={<PrivateRoute><ProjectDetailPage /></PrivateRoute>} />
+          <Route path="/project/:id/schedule" element={<PrivateRoute><SchedulePage /></PrivateRoute>} />
+          <Route path="/schedule/:projectId" element={<PrivateRoute><SchedulePage /></PrivateRoute>} />
+          <Route path="/reports" element={<PrivateRoute><ReportsPage /></PrivateRoute>} />
+          <Route path="/monitoring" element={<PrivateRoute><MonitoringPage /></PrivateRoute>} />
+          <Route path="/performance" element={<PrivateRoute><PerformanceDashboard /></PrivateRoute>} />
+          <Route path="/region/notices" element={<PrivateRoute><RegionNoticesPage /></PrivateRoute>} />
+          <Route path="/region/admin" element={<PrivateRoute><RegionAdminDashboard /></PrivateRoute>} />
+          <Route path="/region/admin/sections/:sectionType" element={<PrivateRoute><RegionSectionEditor /></PrivateRoute>} />
+
+          {/* Error routes */}
+          <Route path="/404" element={<NotFoundPage />} />
+          <Route path="/403" element={<ForbiddenPage />} />
+          <Route path="/500" element={<ServerErrorPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Router>
     </ErrorBoundary>
   );
 }

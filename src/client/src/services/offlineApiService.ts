@@ -91,19 +91,19 @@ class OfflineApiService {
     );
   }
 
-  async updateTask(taskId: string, taskData: any) {
+  async updateTask(scheduleId: string, taskId: string, taskData: any) {
     return this.executeOrQueue(
-      () => apiService.updateTask(taskId, taskData),
+      () => apiService.updateTask(scheduleId, taskId, taskData),
       'UPDATE_TASK',
-      { id: taskId, ...taskData }
+      { scheduleId, id: taskId, ...taskData }
     );
   }
 
-  async deleteTask(taskId: string) {
+  async deleteTask(scheduleId: string, taskId: string) {
     return this.executeOrQueue(
-      () => apiService.deleteTask(taskId),
+      () => apiService.deleteTask(scheduleId, taskId),
       'DELETE_TASK',
-      { id: taskId }
+      { scheduleId, id: taskId }
     );
   }
 
@@ -118,10 +118,6 @@ class OfflineApiService {
 
   async getSchedules(projectId: string) {
     return apiService.getSchedules(projectId);
-  }
-
-  async getSchedule(scheduleId: string) {
-    return apiService.getSchedule(scheduleId);
   }
 
   async getTasks(scheduleId: string) {

@@ -317,6 +317,137 @@ CREATE TABLE IF NOT EXISTS region_notices (
     INDEX idx_created_at (created_at)
 );
 
+-- AI usage tracking table
+CREATE TABLE IF NOT EXISTS ai_usage_log (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36),
+    feature VARCHAR(100) NOT NULL,
+    model VARCHAR(100),
+    input_tokens INT,
+    output_tokens INT,
+    cost_estimate DECIMAL(10,6),
+    latency_ms INT,
+    success BOOLEAN DEFAULT TRUE,
+    error_message TEXT,
+    request_context JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+
+    INDEX idx_user (user_id),
+    INDEX idx_feature (feature),
+    INDEX idx_created_at (created_at),
+    INDEX idx_success (success)
+);
+
+-- AI risk assessments table
+CREATE TABLE IF NOT EXISTS ai_risk_assessments (
+    id VARCHAR(36) PRIMARY KEY,
+    project_id VARCHAR(36) NOT NULL,
+    risk_type ENUM('schedule', 'resource', 'budget', 'weather', 'supply_chain', 'scope', 'quality', 'external') NOT NULL,
+    severity ENUM('low', 'medium', 'high', 'critical') NOT NULL,
+    probability DECIMAL(3,2) DEFAULT 0.50,
+    impact_score INT DEFAULT 50,
+    overall_risk_score INT DEFAULT 50,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    affected_tasks JSON,
+    data_sources JSON,
+    ai_reasoning TEXT,
+    suggested_mitigations JSON,
+    status ENUM('identified', 'monitoring', 'mitigating', 'resolved', 'accepted') DEFAULT 'identified',
+    identified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP NULL,
+
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+
+    INDEX idx_project (project_id),
+    INDEX idx_project_severity (project_id, severity),
+    INDEX idx_risk_type (risk_type),
+    INDEX idx_status (status),
+    INDEX idx_risk_score (overall_risk_score DESC)
+);
+
+-- AI conversations table for persistent chat
+CREATE TABLE IF NOT EXISTS ai_conversations (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    project_id VARCHAR(36),
+    context_type ENUM('project', 'portfolio', 'region', 'system') DEFAULT 'system',
+    title VARCHAR(255),
+    messages JSON,
+    token_count INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,
+
+    INDEX idx_user (user_id),
+    INDEX idx_project (project_id),
+    INDEX idx_active (is_active),
+    INDEX idx_updated (updated_at DESC)
+);
+
+-- AI feedback table for learning
+CREATE TABLE IF NOT EXISTS ai_feedback (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    project_id VARCHAR(36),
+    feature VARCHAR(100) NOT NULL,
+    suggestion_data JSON,
+    user_action ENUM('accepted', 'modified', 'rejected') NOT NULL,
+    modified_data JSON,
+    feedback_text TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    INDEX idx_user (user_id),
+    INDEX idx_feature (feature),
+    INDEX idx_action (user_action)
+);
+
+-- External data cache table
+CREATE TABLE IF NOT EXISTS external_data_cache (
+    id VARCHAR(36) PRIMARY KEY,
+    provider VARCHAR(100) NOT NULL,
+    data_type VARCHAR(100) NOT NULL,
+    region_id VARCHAR(36),
+    query_params JSON,
+    response_data JSON,
+    fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+
+    FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE SET NULL,
+
+    INDEX idx_provider_type (provider, data_type),
+    INDEX idx_region (region_id),
+    INDEX idx_expires (expires_at)
+);
+
+-- AI accuracy tracking table
+CREATE TABLE IF NOT EXISTS ai_accuracy_tracking (
+    id VARCHAR(36) PRIMARY KEY,
+    project_id VARCHAR(36) NOT NULL,
+    task_id VARCHAR(36),
+    metric_type ENUM('duration_estimate', 'cost_estimate', 'risk_prediction', 'dependency_accuracy') NOT NULL,
+    predicted_value DECIMAL(10,2),
+    actual_value DECIMAL(10,2),
+    variance_pct DECIMAL(5,2),
+    project_type VARCHAR(100),
+    region_id VARCHAR(36),
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+
+    INDEX idx_project (project_id),
+    INDEX idx_metric (metric_type),
+    INDEX idx_project_type (project_type),
+    INDEX idx_region (region_id)
+);
+
 -- Create views for common queries
 CREATE OR REPLACE VIEW project_summary AS
 SELECT 

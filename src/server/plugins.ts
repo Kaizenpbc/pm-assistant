@@ -64,8 +64,6 @@ export async function registerPlugins(fastify: FastifyInstance) {
       includeSubDomains: true,
       preload: true
     } : false,
-    noSniff: true,
-    xssFilter: true,
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     crossOriginEmbedderPolicy: false, // Disable for development
     crossOriginOpenerPolicy: { policy: 'same-origin' },
@@ -189,10 +187,12 @@ export async function registerPlugins(fastify: FastifyInstance) {
   });
 
   // Global error handler
-  fastify.setErrorHandler(async (error, request, reply) => {
+  fastify.setErrorHandler(async (err: unknown, request, reply) => {
+    const error = err instanceof Error ? err : new Error(String(err));
+    const statusCode = (error as { statusCode?: number }).statusCode ?? 500;
     // Log error
     console.error('Global error handler:', error);
-    
+
     // Audit log the error
     auditService.logSystemEvent(request, 'error', {
       error: error.message,
@@ -202,9 +202,8 @@ export async function registerPlugins(fastify: FastifyInstance) {
     });
 
     // Send appropriate response
-    const statusCode = error.statusCode || 500;
     const message = statusCode === 500 ? 'Internal Server Error' : error.message;
-    
+
     reply.status(statusCode).send({
       statusCode,
       error: statusCode === 500 ? 'Internal Server Error' : error.name || 'Error',

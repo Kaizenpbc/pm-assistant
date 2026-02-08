@@ -1,68 +1,61 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { ErrorBoundary } from '@components/ErrorBoundary';
 
-// Mock component that throws an error
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
-  if (shouldThrow) {
-    throw new Error('Test error message');
-  }
+  if (shouldThrow) throw new Error('Test error message');
   return <div>No error</div>;
 };
 
-// Mock console.error to avoid noise in test output
-const originalError = console.error;
 beforeEach(() => {
   console.error = vi.fn();
 });
 
 afterEach(() => {
-  console.error = originalError;
+  vi.restoreAllMocks();
 });
 
 describe('ErrorBoundary', () => {
   it('renders children when there is no error', () => {
-    render(
+    renderWithRouter(
       <ErrorBoundary>
         <ThrowError shouldThrow={false} />
       </ErrorBoundary>
     );
-
     expect(screen.getByText('No error')).toBeInTheDocument();
   });
 
   it('renders error UI when there is an error', () => {
-    render(
+    renderWithRouter(
       <ErrorBoundary>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
-
-    // Check for error boundary UI elements
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-    expect(screen.getByText('An unexpected error occurred in the application.')).toBeInTheDocument();
+    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+    expect(screen.getByText(/We encountered an unexpected error/i)).toBeInTheDocument();
     expect(screen.getByText('Try Again')).toBeInTheDocument();
     expect(screen.getByText('Go to Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Refresh Application')).toBeInTheDocument();
   });
 
   it('displays error details in development mode', () => {
-    const originalEnv = process.env.NODE_ENV;
+    const orig = process.env.NODE_ENV;
     process.env.NODE_ENV = 'development';
 
-    render(
+    renderWithRouter(
       <ErrorBoundary>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('🔍 Error Details (Development Mode)')).toBeInTheDocument();
+    expect(screen.getByText(/Error Details \(Development Mode\)/)).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
 
-    process.env.NODE_ENV = originalEnv;
+    process.env.NODE_ENV = orig;
   });
 
   it('does not display error details in production mode', () => {
-    const originalEnv = process.env.NODE_ENV;
+    const orig = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
 
     render(
@@ -71,44 +64,41 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.queryByText('🔍 Error Details (Development Mode)')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Error Details \(Development Mode\)/)).not.toBeInTheDocument();
 
-    process.env.NODE_ENV = originalEnv;
+    process.env.NODE_ENV = orig;
   });
 
   it('calls console.error when an error occurs', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    render(
+    renderWithRouter(
       <ErrorBoundary>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
 
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(spy).toHaveBeenCalledWith(
       'ErrorBoundary caught an error:',
       expect.any(Error),
       expect.any(Object)
     );
-
-    consoleSpy.mockRestore();
   });
 
-  it('has proper accessibility attributes', () => {
-    render(
+  it('has role="alert" and aria-live="polite" on error container', () => {
+    renderWithRouter(
       <ErrorBoundary>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
 
-    // Check for proper ARIA attributes
-    const errorContainer = screen.getByRole('alert');
-    expect(errorContainer).toBeInTheDocument();
-    expect(errorContainer).toHaveAttribute('aria-live', 'polite');
+    const alert = screen.getByRole('alert');
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveAttribute('aria-live', 'polite');
   });
 
   it('includes fallback content notice', () => {
-    render(
+    renderWithRouter(
       <ErrorBoundary>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>

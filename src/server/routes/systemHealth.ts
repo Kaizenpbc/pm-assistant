@@ -64,7 +64,7 @@ export async function systemHealthRoutes(fastify: FastifyInstance) {
         responseTime: `${responseTime.toFixed(2)}ms`
       });
     } catch (error) {
-      fastify.log.error('Health check failed:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Health check failed');
       reply.code(500).send({
         status: 'ERROR',
         service: 'PM Application v2',
@@ -142,7 +142,7 @@ export async function systemHealthRoutes(fastify: FastifyInstance) {
         percentage: memoryPercentage
       };
       
-      const memoryStatus = memoryPercentage < 90 ? 'pass' : 'fail';
+      const memoryStatus: 'pass' | 'fail' = memoryPercentage < 90 ? 'pass' : 'fail';
       checks.push({
         name: 'memory_usage',
         status: memoryStatus,
@@ -224,7 +224,7 @@ export async function systemHealthRoutes(fastify: FastifyInstance) {
       });
     }
 
-    healthStatus.checks = checks;
+    healthStatus.checks = checks as { name: string; status: 'pass' | 'fail'; responseTime: number; details?: string }[];
 
     // Determine overall status
     const failedChecks = checks.filter(check => check.status === 'fail');

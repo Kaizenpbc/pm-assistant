@@ -1,4 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { errorService } from '../services/errorService';
 
 interface Props {
   children: ReactNode;
@@ -7,25 +9,36 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  retryKey: number;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
+    retryKey: 0,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    errorService.reportError(error, 'ErrorBoundary');
   }
+
+  private handleTryAgain = () => {
+    this.setState((s) => ({ hasError: false, error: undefined, retryKey: s.retryKey + 1 }));
+  };
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 flex items-center justify-center p-4">
+        <div
+          className="min-h-screen bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 flex items-center justify-center p-4"
+          role="alert"
+          aria-live="polite"
+        >
           <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl max-w-2xl w-full">
             <div className="text-center">
               {/* Error Icon */}
@@ -65,11 +78,17 @@ export class ErrorBoundary extends Component<Props, State> {
                   🔄 Refresh Application
                 </button>
                 <button
-                  onClick={() => this.setState({ hasError: false })}
+                  onClick={this.handleTryAgain}
                   className="bg-white/20 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all duration-200 border border-white/30"
                 >
                   🔄 Try Again
                 </button>
+                <Link
+                  to="/dashboard"
+                  className="bg-white/20 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all duration-200 border border-white/30 text-center"
+                >
+                  Go to Dashboard
+                </Link>
               </div>
 
               {/* Help Section */}
@@ -127,6 +146,6 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return <div key={this.state.retryKey}>{this.props.children}</div>;
   }
 }

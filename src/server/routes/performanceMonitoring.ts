@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { getPerformanceMonitoringService } from '../services/performanceMonitoringService';
+import type { PerformanceMonitoringService, PerformanceMetric } from '../services/performanceMonitoring';
 
 interface GetMetricsQuery {
   metricName?: string;
@@ -31,7 +32,7 @@ interface UpdateThresholdBody {
 
 export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Initialize performance monitoring service
-  let monitoringService;
+  let monitoringService: PerformanceMonitoringService | undefined = undefined;
   try {
     monitoringService = getPerformanceMonitoringService(fastify);
     
@@ -40,7 +41,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
       monitoringService.startMonitoring(30000); // 30 seconds interval
     }
   } catch (error) {
-    fastify.log.error('Failed to initialize performance monitoring service:', error);
+    fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Failed to initialize performance monitoring service');
     // Continue without performance monitoring
   }
 
@@ -67,7 +68,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         }
       });
     } catch (error) {
-      fastify.log.error('Error fetching performance metrics:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error fetching performance metrics');
       reply.code(500).send({
         success: false,
         error: 'Failed to fetch performance metrics',
@@ -79,6 +80,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Get performance thresholds
   fastify.get('/performance/thresholds', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const thresholds = monitoringService.getThresholds();
       
       reply.code(200).send({
@@ -89,7 +91,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         }
       });
     } catch (error) {
-      fastify.log.error('Error fetching performance thresholds:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error fetching performance thresholds');
       reply.code(500).send({
         success: false,
         error: 'Failed to fetch performance thresholds',
@@ -101,8 +103,8 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Get performance alerts
   fastify.get<{ Querystring: GetAlertsQuery }>('/performance/alerts', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const { limit = '50', severity, acknowledged } = request.query as GetAlertsQuery;
-      
       const acknowledgedBool = acknowledged ? acknowledged === 'true' : undefined;
       const alerts = monitoringService.getAlerts(parseInt(limit), severity, acknowledgedBool);
       
@@ -115,7 +117,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         }
       });
     } catch (error) {
-      fastify.log.error('Error fetching performance alerts:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error fetching performance alerts');
       reply.code(500).send({
         success: false,
         error: 'Failed to fetch performance alerts',
@@ -127,6 +129,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Get SLA metrics
   fastify.get('/performance/sla', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const slaMetrics = monitoringService.getSLAMetrics();
       
       reply.code(200).send({
@@ -137,7 +140,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         }
       });
     } catch (error) {
-      fastify.log.error('Error fetching SLA metrics:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error fetching SLA metrics');
       reply.code(500).send({
         success: false,
         error: 'Failed to fetch SLA metrics',
@@ -149,15 +152,14 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Get monitoring dashboard data
   fastify.get('/performance/dashboard', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const metrics = monitoringService.getMetrics(undefined, 100);
       const alerts = monitoringService.getAlerts(20);
       const thresholds = monitoringService.getThresholds();
       const slaMetrics = monitoringService.getSLAMetrics();
       const stats = monitoringService.getMonitoringStats();
-      
-      // Group metrics by name for easier consumption
-      const metricsByType: Record<string, any[]> = {};
-      metrics.forEach(metric => {
+      const metricsByType: Record<string, PerformanceMetric[]> = {};
+      metrics.forEach((metric: PerformanceMetric) => {
         if (!metricsByType[metric.name]) {
           metricsByType[metric.name] = [];
         }
@@ -176,7 +178,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         }
       });
     } catch (error) {
-      fastify.log.error('Error fetching performance dashboard data:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error fetching performance dashboard data');
       reply.code(500).send({
         success: false,
         error: 'Failed to fetch performance dashboard data',
@@ -188,9 +190,9 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Acknowledge alert
   fastify.post<{ Params: AcknowledgeAlertParams }>('/performance/alerts/:alertId/acknowledge', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const { alertId } = request.params as AcknowledgeAlertParams;
       const { acknowledgedBy } = request.body as { acknowledgedBy: string };
-      
       if (!acknowledgedBy) {
         reply.code(400).send({
           success: false,
@@ -214,7 +216,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         message: 'Alert acknowledged successfully'
       });
     } catch (error) {
-      fastify.log.error('Error acknowledging alert:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error acknowledging alert');
       reply.code(500).send({
         success: false,
         error: 'Failed to acknowledge alert',
@@ -226,8 +228,8 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Resolve alert
   fastify.post<{ Params: AcknowledgeAlertParams }>('/performance/alerts/:alertId/resolve', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const { alertId } = request.params as AcknowledgeAlertParams;
-      
       const success = await monitoringService.resolveAlert(alertId);
       
       if (!success) {
@@ -243,7 +245,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         message: 'Alert resolved successfully'
       });
     } catch (error) {
-      fastify.log.error('Error resolving alert:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error resolving alert');
       reply.code(500).send({
         success: false,
         error: 'Failed to resolve alert',
@@ -255,9 +257,9 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Update threshold
   fastify.put<{ Params: UpdateThresholdParams; Body: UpdateThresholdBody }>('/performance/thresholds/:thresholdId', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const { thresholdId } = request.params as UpdateThresholdParams;
       const updates = request.body as UpdateThresholdBody;
-      
       const success = await monitoringService.updateThreshold(thresholdId, updates);
       
       if (!success) {
@@ -273,7 +275,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         message: 'Threshold updated successfully'
       });
     } catch (error) {
-      fastify.log.error('Error updating threshold:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error updating threshold');
       reply.code(500).send({
         success: false,
         error: 'Failed to update threshold',
@@ -285,6 +287,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Get monitoring statistics
   fastify.get('/performance/stats', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const stats = monitoringService.getMonitoringStats();
       
       reply.code(200).send({
@@ -292,7 +295,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         data: stats
       });
     } catch (error) {
-      fastify.log.error('Error fetching monitoring statistics:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error fetching monitoring statistics');
       reply.code(500).send({
         success: false,
         error: 'Failed to fetch monitoring statistics',
@@ -304,8 +307,8 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Start monitoring
   fastify.post('/performance/monitoring/start', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const { interval = 30000 } = request.body as { interval?: number };
-      
       monitoringService.startMonitoring(interval);
       
       reply.code(200).send({
@@ -314,7 +317,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         interval
       });
     } catch (error) {
-      fastify.log.error('Error starting performance monitoring:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error starting performance monitoring');
       reply.code(500).send({
         success: false,
         error: 'Failed to start performance monitoring',
@@ -326,6 +329,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Stop monitoring
   fastify.post('/performance/monitoring/stop', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       monitoringService.stopMonitoring();
       
       reply.code(200).send({
@@ -333,7 +337,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         message: 'Performance monitoring stopped'
       });
     } catch (error) {
-      fastify.log.error('Error stopping performance monitoring:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error stopping performance monitoring');
       reply.code(500).send({
         success: false,
         error: 'Failed to stop performance monitoring',
@@ -345,6 +349,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
   // Get monitoring status
   fastify.get('/performance/monitoring/status', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      if (!monitoringService) return reply.code(503).send({ success: false, error: 'Performance monitoring service not available' });
       const isActive = monitoringService.isMonitoringActive();
       
       reply.code(200).send({
@@ -356,7 +361,7 @@ export async function performanceMonitoringRoutes(fastify: FastifyInstance) {
         }
       });
     } catch (error) {
-      fastify.log.error('Error fetching monitoring status:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error fetching monitoring status');
       reply.code(500).send({
         success: false,
         error: 'Failed to fetch monitoring status',

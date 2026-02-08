@@ -26,6 +26,18 @@ const configSchema = z.object({
   
   // Logging Configuration
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly']).default('debug'),
+
+  // AI Configuration
+  ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY is required for AI features').optional(),
+  AI_MODEL: z.string().default('claude-sonnet-4-5-20250929'),
+  AI_MAX_TOKENS: z.coerce.number().min(256).max(16384).default(4096),
+  AI_TEMPERATURE: z.coerce.number().min(0).max(1).default(0.3),
+  AI_ENABLED: z.enum(['true', 'false']).default('true').transform(v => v === 'true'),
+
+  // Weather API Configuration
+  WEATHER_API_PROVIDER: z.enum(['openweathermap', 'weatherapi', 'accuweather', 'mock']).default('mock'),
+  WEATHER_API_KEY: z.string().optional(),
+  WEATHER_CACHE_MINUTES: z.coerce.number().min(1).max(1440).default(60),
 }).refine((data) => {
   // Additional validation: ensure secrets are different
   if (data.JWT_SECRET === data.JWT_REFRESH_SECRET) {
@@ -59,6 +71,14 @@ export function validateConfiguration() {
       COOKIE_SECRET: process.env['COOKIE_SECRET'],
       CORS_ORIGIN: process.env['CORS_ORIGIN'],
       LOG_LEVEL: process.env['LOG_LEVEL'],
+      ANTHROPIC_API_KEY: process.env['ANTHROPIC_API_KEY'],
+      AI_MODEL: process.env['AI_MODEL'],
+      AI_MAX_TOKENS: process.env['AI_MAX_TOKENS'],
+      AI_TEMPERATURE: process.env['AI_TEMPERATURE'],
+      AI_ENABLED: process.env['AI_ENABLED'],
+      WEATHER_API_PROVIDER: process.env['WEATHER_API_PROVIDER'],
+      WEATHER_API_KEY: process.env['WEATHER_API_KEY'],
+      WEATHER_CACHE_MINUTES: process.env['WEATHER_CACHE_MINUTES'],
     };
 
     console.log('🔍 Validating configuration...');
@@ -81,8 +101,9 @@ export function validateConfiguration() {
     
     if (error instanceof z.ZodError) {
       console.error('Validation errors:');
-      error.errors.forEach((err, index) => {
-        console.error(`  ${index + 1}. ${err.path.join('.')}: ${err.message}`);
+      error.issues.forEach((issue: z.ZodIssue, index: number) => {
+        const path = issue.path.length ? issue.path.join('.') : '(root)';
+        console.error(`  ${index + 1}. ${path}: ${issue.message}`);
       });
     } else {
       console.error(`  ${error instanceof Error ? error.message : 'Unknown error'}`);

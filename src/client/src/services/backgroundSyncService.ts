@@ -167,23 +167,35 @@ class BackgroundSyncService {
           }
           break;
 
-        case 'UPDATE_TASK':
+        case 'UPDATE_TASK': {
+          const { scheduleId, id: taskId, ...taskData } = action.data;
+          if (!scheduleId || !taskId) {
+            error = 'Missing scheduleId or taskId for UPDATE_TASK';
+            break;
+          }
           try {
-            await apiService.updateTask(action.data.id, action.data);
+            await apiService.updateTask(scheduleId, taskId, taskData);
             success = true;
           } catch (err: any) {
             error = err.message || 'Failed to update task';
           }
           break;
+        }
 
-        case 'DELETE_TASK':
+        case 'DELETE_TASK': {
+          const { scheduleId, id: taskId } = action.data;
+          if (!scheduleId || !taskId) {
+            error = 'Missing scheduleId or taskId for DELETE_TASK';
+            break;
+          }
           try {
-            await apiService.deleteTask(action.data.id);
+            await apiService.deleteTask(scheduleId, taskId);
             success = true;
           } catch (err: any) {
             error = err.message || 'Failed to delete task';
           }
           break;
+        }
 
         default:
           error = `Unknown action type: ${action.type}`;
@@ -247,7 +259,7 @@ class BackgroundSyncService {
     }
   }
 
-  public async queueOfflineAction(type: string, data: any): Promise<void> {
+  public async queueOfflineAction(type: import('./indexedDBService').OfflineActionType, data: any): Promise<void> {
     try {
       await indexedDBService.addOfflineAction({
         type,

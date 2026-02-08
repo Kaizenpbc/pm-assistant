@@ -245,7 +245,7 @@ class NotificationService {
   private initializeEmailTransporter() {
     const emailChannel = this.channels.get('email');
     if (emailChannel && emailChannel.enabled && emailChannel.config.smtp) {
-      this.emailTransporter = nodemailer.createTransporter(emailChannel.config.smtp);
+      this.emailTransporter = nodemailer.createTransport(emailChannel.config.smtp);
     }
   }
 

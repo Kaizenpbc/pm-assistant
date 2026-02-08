@@ -6,7 +6,8 @@ export interface User {
   username: string;
   email: string;
   fullName: string;
-  role: 'admin' | 'manager' | 'user' | 'rdc';
+  role: 'admin' | 'manager' | 'user' | 'rdc' | 'region_admin' | 'citizen';
+  region_id?: string | null;
 }
 
 interface AuthState {

@@ -26,7 +26,7 @@ export async function healthRoutes(fastify: FastifyInstance) {
   // Get project health score
   fastify.get('/health/:projectId', async (request, reply) => {
     try {
-      const { projectId } = request.params;
+      const { projectId } = request.params as { projectId: string };
       
       // TODO: Get actual project data from database
       // For now, return mock data based on project ID
@@ -58,7 +58,7 @@ export async function healthRoutes(fastify: FastifyInstance) {
         }
       };
     } catch (error) {
-      fastify.log.error('Error calculating project health:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error calculating project health');
       return reply.status(500).send({
         success: false,
         error: 'Failed to calculate project health'
@@ -70,7 +70,7 @@ export async function healthRoutes(fastify: FastifyInstance) {
   fastify.post('/health/calculate', async (request, reply) => {
     try {
       const projectData = request.body as ProjectHealthData;
-      
+
       // Set current date if not provided
       if (!projectData.currentDate) {
         projectData.currentDate = new Date();
@@ -86,7 +86,7 @@ export async function healthRoutes(fastify: FastifyInstance) {
         }
       };
     } catch (error) {
-      fastify.log.error('Error calculating project health:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error calculating project health');
       return reply.status(500).send({
         success: false,
         error: 'Failed to calculate project health'

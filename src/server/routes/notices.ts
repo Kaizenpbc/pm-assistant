@@ -80,7 +80,7 @@ export async function noticeRoutes(fastify: FastifyInstance) {
 
       return { notices };
     } catch (error) {
-      fastify.log.error('Get notices error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Get notices error');
       return reply.status(500).send({
         error: 'Internal server error',
         message: 'Failed to fetch notices',
@@ -124,7 +124,7 @@ export async function noticeRoutes(fastify: FastifyInstance) {
 
       return { notices };
     } catch (error) {
-      fastify.log.error('Get all notices error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Get all notices error');
       return reply.status(500).send({
         error: 'Internal server error',
         message: 'Failed to fetch notices',
@@ -199,11 +199,11 @@ export async function noticeRoutes(fastify: FastifyInstance) {
 
       return reply.status(201).send({ notice });
     } catch (error) {
-      fastify.log.error('Create notice error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Create notice error');
       if (error instanceof z.ZodError) {
         return reply.status(400).send({
           error: 'Validation error',
-          message: error.errors,
+          message: error.issues,
         });
       }
       return reply.status(500).send({
@@ -299,11 +299,11 @@ export async function noticeRoutes(fastify: FastifyInstance) {
 
       return { notice: updated };
     } catch (error) {
-      fastify.log.error('Update notice error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Update notice error');
       if (error instanceof z.ZodError) {
         return reply.status(400).send({
           error: 'Validation error',
-          message: error.errors,
+          message: error.issues,
         });
       }
       return reply.status(500).send({
@@ -375,7 +375,7 @@ export async function noticeRoutes(fastify: FastifyInstance) {
 
       return { notice: updated };
     } catch (error) {
-      fastify.log.error('Publish notice error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Publish notice error');
       return reply.status(500).send({
         error: 'Internal server error',
         message: 'Failed to publish notice',
@@ -421,7 +421,7 @@ export async function noticeRoutes(fastify: FastifyInstance) {
 
       return { success: true, message: 'Notice deleted successfully' };
     } catch (error) {
-      fastify.log.error('Delete notice error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Delete notice error');
       return reply.status(500).send({
         error: 'Internal server error',
         message: 'Failed to delete notice',

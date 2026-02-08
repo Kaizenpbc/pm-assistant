@@ -1,9 +1,11 @@
 // IndexedDB Service for offline data storage
 // Handles offline actions, project data, and sync queue
 
+export type OfflineActionType = 'CREATE_PROJECT' | 'UPDATE_PROJECT' | 'CREATE_SCHEDULE' | 'UPDATE_SCHEDULE' | 'CREATE_TASK' | 'UPDATE_TASK' | 'DELETE_TASK';
+
 interface OfflineAction {
   id: string;
-  type: 'CREATE_PROJECT' | 'UPDATE_PROJECT' | 'CREATE_SCHEDULE' | 'UPDATE_SCHEDULE' | 'CREATE_TASK' | 'UPDATE_TASK' | 'DELETE_TASK';
+  type: OfflineActionType;
   data: any;
   timestamp: number;
   retryCount: number;

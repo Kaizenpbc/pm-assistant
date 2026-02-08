@@ -11,7 +11,7 @@ const createSectionSchema = z.object({
   content: z.string().min(1, 'Content is required'),
   displayOrder: z.number().int().default(0),
   isVisible: z.boolean().default(true),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 const updateSectionSchema = createSectionSchema.partial().omit({ regionId: true, sectionType: true });
@@ -46,7 +46,7 @@ export async function regionContentRoutes(fastify: FastifyInstance) {
 
       return { sections };
     } catch (error) {
-      fastify.log.error('Get region content error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Get region content error');
       return reply.status(500).send({
         error: 'Internal server error',
         message: 'Failed to fetch region content',
@@ -88,7 +88,7 @@ export async function regionContentRoutes(fastify: FastifyInstance) {
 
       return { sections };
     } catch (error) {
-      fastify.log.error('Get all region content error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Get all region content error');
       return reply.status(500).send({
         error: 'Internal server error',
         message: 'Failed to fetch region content',
@@ -126,7 +126,7 @@ export async function regionContentRoutes(fastify: FastifyInstance) {
 
       return { section };
     } catch (error) {
-      fastify.log.error('Get section error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Get section error');
       return reply.status(500).send({
         error: 'Internal server error',
         message: 'Failed to fetch section',
@@ -233,11 +233,11 @@ export async function regionContentRoutes(fastify: FastifyInstance) {
 
       return reply.status(existing ? 200 : 201).send({ section });
     } catch (error) {
-      fastify.log.error('Create/update section error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Create/update section error');
       if (error instanceof z.ZodError) {
         return reply.status(400).send({
           error: 'Validation error',
-          message: error.errors,
+          message: error.issues,
         });
       }
       return reply.status(500).send({
@@ -332,11 +332,11 @@ export async function regionContentRoutes(fastify: FastifyInstance) {
 
       return { section: updated };
     } catch (error) {
-      fastify.log.error('Update section error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Update section error');
       if (error instanceof z.ZodError) {
         return reply.status(400).send({
           error: 'Validation error',
-          message: error.errors,
+          message: error.issues,
         });
       }
       return reply.status(500).send({
@@ -384,7 +384,7 @@ export async function regionContentRoutes(fastify: FastifyInstance) {
 
       return { success: true, message: 'Section deleted successfully' };
     } catch (error) {
-      fastify.log.error('Delete section error:', error);
+      fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Delete section error');
       return reply.status(500).send({
         error: 'Internal server error',
         message: 'Failed to delete section',
