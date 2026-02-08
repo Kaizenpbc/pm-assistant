@@ -1,4 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { getApiErrorMessage } from './errorService';
+
+export { getApiErrorMessage };
 
 class ApiService {
   private api: AxiosInstance;
@@ -163,6 +166,7 @@ class ApiService {
     assignedTo?: string;
     dueDate?: string;
     estimatedDays?: number;
+    parentTaskId?: string;
     workEffort?: string;
     dependency?: string;
     risks?: string;
@@ -175,6 +179,11 @@ class ApiService {
 
   async updateTask(scheduleId: string, taskId: string, taskData: any) {
     const response = await this.api.put(`/schedules/${scheduleId}/tasks/${taskId}`, taskData);
+    return response.data;
+  }
+
+  async deleteTask(scheduleId: string, taskId: string) {
+    const response = await this.api.delete(`/schedules/${scheduleId}/tasks/${taskId}`);
     return response.data;
   }
 
@@ -207,6 +216,45 @@ class ApiService {
 
   async getProjectInsights(projectId: string) {
     const response = await this.api.get(`/ai-scheduling/insights/${projectId}`);
+    return response.data;
+  }
+
+  // AI Chat endpoints
+  async sendChatMessage(data: {
+    message: string;
+    conversationId?: string;
+    context?: { type: string; projectId?: string; regionId?: string };
+  }) {
+    const response = await this.api.post('/ai-chat/message', data);
+    return response.data;
+  }
+
+  streamChatMessage(data: {
+    message: string;
+    conversationId?: string;
+    context?: { type: string; projectId?: string; regionId?: string };
+  }): Promise<Response> {
+    // Use native fetch for SSE streaming (axios doesn't support ReadableStream)
+    return fetch('http://localhost:3001/api/v1/ai-chat/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getChatConversations() {
+    const response = await this.api.get('/ai-chat/conversations');
+    return response.data;
+  }
+
+  async getChatConversation(id: string) {
+    const response = await this.api.get(`/ai-chat/conversations/${id}`);
+    return response.data;
+  }
+
+  async deleteChatConversation(id: string) {
+    const response = await this.api.delete(`/ai-chat/conversations/${id}`);
     return response.data;
   }
 

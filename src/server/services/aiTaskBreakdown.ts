@@ -1,5 +1,4 @@
 import { FastifyInstance } from 'fastify';
-import { AILearningService } from './aiLearning';
 
 export interface TaskSuggestion {
   id: string;
@@ -21,7 +20,7 @@ export interface ProjectAnalysis {
   complexity: 'low' | 'medium' | 'high';
   estimatedDuration: number;
   riskLevel: number;
-  suggestedPhases: any[]; // Changed from string[] to any[] to include phase objects
+  suggestedPhases: any[];
   taskSuggestions: TaskSuggestion[];
   criticalPath: string[];
   resourceRequirements: {
@@ -32,44 +31,26 @@ export interface ProjectAnalysis {
   };
 }
 
-export class AITaskBreakdownService {
+/**
+ * Fallback service that uses hardcoded templates when Claude API is unavailable.
+ * Previously named AITaskBreakdownService.
+ */
+export class FallbackTaskBreakdownService {
   private fastify: FastifyInstance;
-  private learningService: AILearningService;
 
   constructor(fastify: FastifyInstance) {
     this.fastify = fastify;
-    this.learningService = new AILearningService(fastify);
   }
 
-  /**
-   * Analyzes a project description and suggests intelligent task breakdown
-   */
   async analyzeProject(projectDescription: string, projectType?: string): Promise<ProjectAnalysis> {
     try {
-      // Extract key information from project description
       const analysis = await this.extractProjectInfo(projectDescription);
-      
-      // Generate task suggestions based on project type and description
-      let taskData = await this.generateTaskSuggestions(analysis, projectType);
-      
-      // Apply learning improvements to tasks
-      taskData.tasks = await this.learningService.applyLearning(
-        taskData.tasks, 
-        analysis.projectType, 
-        projectDescription
-      );
-      
-      // Calculate project complexity and risk
+      const taskData = await this.generateTaskSuggestions(analysis, projectType);
+
       const complexity = this.calculateProjectComplexity(taskData.tasks);
       const riskLevel = this.calculateRiskLevel(taskData.tasks);
-      
-      // Identify critical path
       const criticalPath = this.identifyCriticalPath(taskData.tasks);
-      
-      // Estimate resource requirements
       const resourceRequirements = this.estimateResourceRequirements(taskData.tasks);
-      
-      // Calculate estimated duration
       const estimatedDuration = this.calculateEstimatedDuration(taskData.tasks);
 
       return {
@@ -77,54 +58,14 @@ export class AITaskBreakdownService {
         complexity,
         estimatedDuration,
         riskLevel,
-        suggestedPhases: taskData.phases, // Use AI-generated phases instead of analysis.phases
+        suggestedPhases: taskData.phases,
         taskSuggestions: taskData.tasks,
         criticalPath,
-        resourceRequirements
+        resourceRequirements,
       };
     } catch (error) {
-      this.fastify.log.error('Error in AI task breakdown:', error);
+      this.fastify.log.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error in fallback task breakdown');
       throw new Error('Failed to analyze project for task breakdown');
-    }
-  }
-
-  /**
-   * Records user feedback for learning and improvement
-   */
-  async recordFeedback(feedbackData: {
-    projectType: string;
-    projectDescription: string;
-    generatedTasks: any[];
-    userFeedback: {
-      acceptedTasks: string[];
-      rejectedTasks: string[];
-      modifiedTasks: any[];
-      actualDurations?: Record<string, number>;
-      actualComplexities?: Record<string, string>;
-    };
-  }): Promise<void> {
-    try {
-      await this.learningService.recordFeedback({
-        ...feedbackData,
-        timestamp: new Date().toISOString()
-      });
-      
-      this.fastify.log.info('AI learning feedback recorded successfully');
-    } catch (error) {
-      this.fastify.log.error('Error recording AI learning feedback:', error);
-      throw new Error('Failed to record learning feedback');
-    }
-  }
-
-  /**
-   * Gets learning insights and improvement suggestions
-   */
-  async getLearningInsights(): Promise<any> {
-    try {
-      return await this.learningService.getLearningInsights();
-    } catch (error) {
-      this.fastify.log.error('Error getting AI learning insights:', error);
-      throw new Error('Failed to get learning insights');
     }
   }
 
@@ -294,7 +235,7 @@ export class AITaskBreakdownService {
         name: '📦 Procurement Phase',
         description: 'Material procurement and vendor selection',
         estimatedDays: 0,
-        tasks: []
+        tasks: [] as TaskSuggestion[]
       },
       {
         id: 'construction-phase',
@@ -308,7 +249,7 @@ export class AITaskBreakdownService {
         name: '✅ Completion Phase',
         description: 'Final testing, inspection, and project handover',
         estimatedDays: 0,
-        tasks: []
+        tasks: [] as TaskSuggestion[]
       }
     ];
 
@@ -345,35 +286,12 @@ export class AITaskBreakdownService {
    * Organizes non-construction tasks into default phases
    */
   private organizeDefaultPhases(tasks: TaskSuggestion[]): { tasks: TaskSuggestion[], phases: any[] } {
-    const phases = [
-      {
-        id: 'planning-phase',
-        name: '📋 Planning Phase',
-        description: 'Requirements analysis and project planning',
-        estimatedDays: 0,
-        tasks: []
-      },
-      {
-        id: 'development-phase',
-        name: '💻 Development Phase',
-        description: 'Main development and implementation work',
-        estimatedDays: 0,
-        tasks: []
-      },
-      {
-        id: 'testing-phase',
-        name: '🧪 Testing Phase',
-        description: 'Testing, QA, and quality assurance',
-        estimatedDays: 0,
-        tasks: []
-      },
-      {
-        id: 'deployment-phase',
-        name: '🚀 Deployment Phase',
-        description: 'Deployment and project handover',
-        estimatedDays: 0,
-        tasks: []
-      }
+    type PhaseGroup = { id: string; name: string; description: string; estimatedDays: number; tasks: TaskSuggestion[] };
+    const phases: PhaseGroup[] = [
+      { id: 'planning-phase', name: '📋 Planning Phase', description: 'Requirements analysis and project planning', estimatedDays: 0, tasks: [] as TaskSuggestion[] },
+      { id: 'development-phase', name: '💻 Development Phase', description: 'Main development and implementation work', estimatedDays: 0, tasks: [] as TaskSuggestion[] },
+      { id: 'testing-phase', name: '🧪 Testing Phase', description: 'Testing, QA, and quality assurance', estimatedDays: 0, tasks: [] as TaskSuggestion[] },
+      { id: 'deployment-phase', name: '🚀 Deployment Phase', description: 'Deployment and project handover', estimatedDays: 0, tasks: [] as TaskSuggestion[] }
     ];
 
     // Categorize tasks by their category field
@@ -1136,7 +1054,7 @@ export class AITaskBreakdownService {
   /**
    * Adjusts complexity based on project characteristics and task specifics
    */
-  private adjustComplexityForProject(baseComplexity: string, analysis: any, task: TaskSuggestion): string {
+  private adjustComplexityForProject(baseComplexity: string, analysis: any, task: TaskSuggestion): 'low' | 'medium' | 'high' {
     let complexityScore = baseComplexity === 'high' ? 3 : baseComplexity === 'medium' ? 2 : 1;
     
     // Adjust based on project type
@@ -1162,3 +1080,6 @@ export class AITaskBreakdownService {
     return 'low';
   }
 }
+
+// Backward-compatible alias
+export const AITaskBreakdownService = FallbackTaskBreakdownService;
