@@ -12,6 +12,7 @@ import { DashboardRouter } from './pages/DashboardRouter';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import SchedulePage from './pages/SchedulePage';
 import { ReportsPage } from './pages/ReportsPage';
+import { ScenarioModelingPage } from './pages/ScenarioModelingPage';
 import MonitoringPage from './pages/MonitoringPage';
 import PerformanceDashboard from './components/PerformanceDashboard';
 import { RegionInfoPage } from './pages/RegionInfoPage';
@@ -77,6 +78,7 @@ function App() {
           <Route path="/dashboard" element={<PrivateRoute><DashboardRouter /></PrivateRoute>} />
           <Route path="/project/:id" element={<PrivateRoute><ProjectDetailPage /></PrivateRoute>} />
           <Route path="/project/:id/schedule" element={<PrivateRoute><SchedulePage /></PrivateRoute>} />
+          <Route path="/project/:id/scenarios" element={<PrivateRoute><ScenarioModelingPage /></PrivateRoute>} />
           <Route path="/schedule/:projectId" element={<PrivateRoute><SchedulePage /></PrivateRoute>} />
           <Route path="/reports" element={<PrivateRoute><ReportsPage /></PrivateRoute>} />
           <Route path="/monitoring" element={<PrivateRoute><MonitoringPage /></PrivateRoute>} />

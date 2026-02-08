@@ -425,6 +425,75 @@ class ApiService {
     const response = await this.api.get(`/predictions/project/${projectId}/health`);
     return response.data;
   }
+
+  // ---------------------------------------------------------------------------
+  // Phase 5 — Learning & Intelligence
+  // ---------------------------------------------------------------------------
+
+  // Learning (5.1)
+  async submitAIFeedback(feedback: {
+    feature: string;
+    projectId?: string;
+    userAction: 'accepted' | 'modified' | 'rejected';
+    suggestionData?: Record<string, unknown>;
+    feedbackText?: string;
+  }) {
+    const response = await this.api.post('/learning/feedback', feedback);
+    return response.data;
+  }
+
+  async getAccuracyReport(projectType?: string, regionId?: string) {
+    const params = new URLSearchParams();
+    if (projectType) params.set('projectType', projectType);
+    if (regionId) params.set('regionId', regionId);
+    const qs = params.toString();
+    const response = await this.api.get(`/learning/accuracy-report${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  async getAIInsights() {
+    const response = await this.api.get('/learning/insights');
+    return response.data;
+  }
+
+  // Anomalies (5.4)
+  async getAnomalies(regionId?: string) {
+    const params = regionId ? `?regionId=${regionId}` : '';
+    const response = await this.api.get(`/intelligence/anomalies${params}`);
+    return response.data;
+  }
+
+  async getProjectAnomalies(projectId: string) {
+    const response = await this.api.get(`/intelligence/anomalies/project/${projectId}`);
+    return response.data;
+  }
+
+  // Cross-project (5.3)
+  async getCrossProjectInsights(regionId?: string) {
+    const params = regionId ? `?regionId=${regionId}` : '';
+    const response = await this.api.get(`/intelligence/cross-project${params}`);
+    return response.data;
+  }
+
+  async getSimilarProjects(projectId: string) {
+    const response = await this.api.get(`/intelligence/cross-project/similar/${projectId}`);
+    return response.data;
+  }
+
+  // Scenarios (5.2)
+  async modelScenario(data: {
+    projectId: string;
+    scenario: string;
+    parameters?: {
+      budgetChangePct?: number;
+      workerChange?: number;
+      daysExtension?: number;
+      scopeChangePct?: number;
+    };
+  }) {
+    const response = await this.api.post('/intelligence/scenarios', data);
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

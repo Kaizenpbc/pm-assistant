@@ -73,6 +73,22 @@ export interface RegionContext {
   totalBudget: number;
 }
 
+export interface CrossProjectResourceContext {
+  userId: string;
+  userName: string;
+  activeTasks: number;
+  projectCount: number;
+  projects: string[];
+}
+
+export interface HistoricalCompletionContext {
+  projectId: string;
+  windowDays: number;
+  dailyCompletions: Array<{ date: string; completed: number }>;
+  lastActivityDate: string | null;
+  currentBudgetSpent: number;
+}
+
 export interface PortfolioContext {
   totalProjects: number;
   activeProjects: number;
@@ -377,6 +393,120 @@ export class AIContextBuilder {
       });
     }
 
+    return prompt;
+  }
+
+  // -----------------------------------------------------------------------
+  // Cross-Project Resource Context (Step 5)
+  // -----------------------------------------------------------------------
+
+  async buildCrossProjectResourceContext(regionId?: string): Promise<CrossProjectResourceContext[]> {
+    const cacheKey = `cross-resource:${regionId || 'all'}`;
+    const cached = this.getFromCache(cacheKey);
+    if (cached) return cached;
+
+    const db = (this.fastify as any).mysql || (this.fastify as any).db;
+    const whereClause = regionId ? 'AND p.region_id = ?' : '';
+    const params = regionId ? [regionId] : [];
+
+    const [rows]: any = await db.query(
+      `SELECT u.id as user_id, CONCAT(u.first_name, ' ', u.last_name) as user_name,
+              COUNT(t.id) as active_tasks,
+              COUNT(DISTINCT p.id) as project_count,
+              GROUP_CONCAT(DISTINCT p.name SEPARATOR '|||') as project_names
+       FROM users u
+       JOIN tasks t ON t.assigned_to = u.id
+       JOIN project_schedules ps ON t.schedule_id = ps.id
+       JOIN projects p ON ps.project_id = p.id
+       WHERE t.status IN ('pending', 'in_progress') ${whereClause}
+       GROUP BY u.id, u.first_name, u.last_name
+       HAVING project_count > 1
+       ORDER BY active_tasks DESC`,
+      params,
+    );
+
+    const result: CrossProjectResourceContext[] = rows.map((r: any) => ({
+      userId: r.user_id,
+      userName: r.user_name,
+      activeTasks: parseInt(r.active_tasks),
+      projectCount: parseInt(r.project_count),
+      projects: r.project_names ? r.project_names.split('|||') : [],
+    }));
+
+    this.setCache(cacheKey, result);
+    return result;
+  }
+
+  // -----------------------------------------------------------------------
+  // Historical Completion Context (Step 5)
+  // -----------------------------------------------------------------------
+
+  async buildHistoricalCompletionContext(
+    projectId: string,
+    windowDays = 30,
+  ): Promise<HistoricalCompletionContext> {
+    const cacheKey = `hist-completion:${projectId}:${windowDays}`;
+    const cached = this.getFromCache(cacheKey);
+    if (cached) return cached;
+
+    const db = (this.fastify as any).mysql || (this.fastify as any).db;
+
+    // Daily completions over the window
+    const [rows]: any = await db.query(
+      `SELECT DATE(t.updated_at) as completion_date, COUNT(*) as completed
+       FROM tasks t
+       JOIN project_schedules ps ON t.schedule_id = ps.id
+       WHERE ps.project_id = ?
+         AND t.status = 'completed'
+         AND t.updated_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+       GROUP BY DATE(t.updated_at)
+       ORDER BY completion_date ASC`,
+      [projectId, windowDays],
+    );
+
+    // Last activity date
+    const [activityRows]: any = await db.query(
+      `SELECT MAX(t.updated_at) as last_activity
+       FROM tasks t
+       JOIN project_schedules ps ON t.schedule_id = ps.id
+       WHERE ps.project_id = ?`,
+      [projectId],
+    );
+
+    // Budget change over last 14 days
+    const [budgetRows]: any = await db.query(
+      `SELECT budget_spent FROM projects WHERE id = ?`,
+      [projectId],
+    );
+
+    const dailyCompletions = rows.map((r: any) => ({
+      date: r.completion_date instanceof Date
+        ? r.completion_date.toISOString().split('T')[0]
+        : String(r.completion_date),
+      completed: parseInt(r.completed),
+    }));
+
+    const result: HistoricalCompletionContext = {
+      projectId,
+      windowDays,
+      dailyCompletions,
+      lastActivityDate: activityRows[0]?.last_activity
+        ? new Date(activityRows[0].last_activity).toISOString()
+        : null,
+      currentBudgetSpent: parseFloat(budgetRows[0]?.budget_spent) || 0,
+    };
+
+    this.setCache(cacheKey, result);
+    return result;
+  }
+
+  crossProjectToPromptString(resources: CrossProjectResourceContext[]): string {
+    if (resources.length === 0) return 'No cross-project resource conflicts detected.';
+
+    let prompt = `### Cross-Project Resource Allocation\n`;
+    for (const r of resources) {
+      prompt += `- ${r.userName}: ${r.activeTasks} active tasks across ${r.projectCount} projects (${r.projects.join(', ')})\n`;
+    }
     return prompt;
   }
 

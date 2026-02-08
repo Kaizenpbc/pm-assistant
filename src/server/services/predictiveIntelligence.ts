@@ -3,6 +3,7 @@ import { AIContextBuilder, ProjectContext, ProjectMetrics } from './aiContextBui
 import { claudeService, PromptTemplate } from './claudeService';
 import { dataProviderManager } from './dataProviders';
 import { logAIUsage } from './aiUsageLogger';
+import { AILearningServiceV2 } from './aiLearningService';
 import {
   AIRiskAssessmentSchema,
   AIWeatherImpactSchema,
@@ -230,10 +231,12 @@ function isOutdoorTask(taskName: string, category?: string): boolean {
 export class PredictiveIntelligenceService {
   private contextBuilder: AIContextBuilder;
   private fastify: FastifyInstance;
+  private learningService: AILearningServiceV2;
 
   constructor(fastify: FastifyInstance) {
     this.fastify = fastify;
     this.contextBuilder = new AIContextBuilder(fastify);
+    this.learningService = new AILearningServiceV2(fastify);
   }
 
   // -----------------------------------------------------------------------
@@ -258,7 +261,11 @@ export class PredictiveIntelligenceService {
     }
 
     try {
-      const projectPrompt = this.contextBuilder.toPromptString(context);
+      let projectPrompt = this.contextBuilder.toPromptString(context);
+      // Inject learning context
+      const learningCtx = await this.learningService.buildLearningContext(context.project.category);
+      if (learningCtx) projectPrompt += learningCtx;
+
       let weatherSummary = 'Weather data unavailable';
       try {
         const coords = lookupRegionCoordinates(context.project.region);
@@ -420,7 +427,11 @@ export class PredictiveIntelligenceService {
     }
 
     try {
-      const projectPrompt = this.contextBuilder.toPromptString(context);
+      let projectPrompt = this.contextBuilder.toPromptString(context);
+      // Inject learning context
+      const learningCtx = await this.learningService.buildLearningContext(context.project.category);
+      if (learningCtx) projectPrompt += learningCtx;
+
       const evmStr = Object.entries(evm)
         .map(([k, v]) => `${k}: ${v}`)
         .join('\n');
@@ -524,7 +535,11 @@ export class PredictiveIntelligenceService {
     }
 
     try {
-      const portfolioPrompt = this.contextBuilder.portfolioToPromptString(portfolio);
+      let portfolioPrompt = this.contextBuilder.portfolioToPromptString(portfolio);
+      // Inject learning context
+      const learningCtx = await this.learningService.buildLearningContext();
+      if (learningCtx) portfolioPrompt += learningCtx;
+
       const systemPrompt = dashboardBriefingPrompt.render({
         portfolioData: portfolioPrompt,
         weatherOverview,

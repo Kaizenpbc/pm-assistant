@@ -13,6 +13,8 @@ import { noticeRoutes } from './routes/notices';
 import { regionContentRoutes } from './routes/regionContent';
 import { predictionRoutes } from './routes/predictions';
 import { aiReportRoutes } from './routes/aiReports';
+import { learningRoutes } from './routes/learning';
+import { intelligenceRoutes } from './routes/intelligence';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // API routes
@@ -27,6 +29,8 @@ export async function registerRoutes(fastify: FastifyInstance) {
   await fastify.register(noticeRoutes, { prefix: '/api/v1/notices' });
   await fastify.register(regionContentRoutes, { prefix: '/api/v1/region-content' });
   await fastify.register(predictionRoutes, { prefix: '/api/v1/predictions' });
+  await fastify.register(learningRoutes, { prefix: '/api/v1/learning' });
+  await fastify.register(intelligenceRoutes, { prefix: '/api/v1/intelligence' });
   await fastify.register(versionRoutes, { prefix: '/api/v1' });
   await fastify.register(performanceMonitoringRoutes, { prefix: '/api/v1' });
   

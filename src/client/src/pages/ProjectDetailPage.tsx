@@ -14,6 +14,9 @@ import {
   ExternalLink,
   CheckCircle,
   BarChart3,
+  ThumbsUp,
+  ThumbsDown,
+  FlaskConical,
 } from 'lucide-react';
 import { apiService } from '../services/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -82,7 +85,15 @@ export function ProjectDetailPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: anomalyData } = useQuery({
+    queryKey: ['project-anomalies', id],
+    queryFn: () => apiService.getProjectAnomalies(id!),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const project = projectData?.data;
+  const projectAnomalies = anomalyData?.data?.anomalies || [];
   const health = healthData?.data;
   const riskAssessment = riskData?.data;
   const weatherImpact = weatherData?.data;
@@ -159,18 +170,33 @@ export function ProjectDetailPage() {
                   Health: {healthScore}
                 </span>
               )}
+              {projectAnomalies.length > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-medium text-orange-700">
+                  <AlertTriangle className="h-3 w-3" />
+                  {projectAnomalies.length} anomal{projectAnomalies.length !== 1 ? 'ies' : 'y'}
+                </span>
+              )}
             </div>
             {project.description && (
               <p className="mt-1 text-sm text-gray-500">{project.description}</p>
             )}
           </div>
-          <button
-            onClick={() => navigate(`/project/${id}/schedule`)}
-            className="flex items-center gap-1.5 rounded-lg bg-ai-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-ai-primary-hover"
-          >
-            <Calendar className="h-4 w-4" />
-            Open Schedule
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/project/${id}/scenarios`)}
+              className="flex items-center gap-1.5 rounded-lg border border-ai-primary px-3 py-2 text-sm font-medium text-ai-primary transition-colors hover:bg-ai-primary/5"
+            >
+              <FlaskConical className="h-4 w-4" />
+              What If
+            </button>
+            <button
+              onClick={() => navigate(`/project/${id}/schedule`)}
+              className="flex items-center gap-1.5 rounded-lg bg-ai-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-ai-primary-hover"
+            >
+              <Calendar className="h-4 w-4" />
+              Open Schedule
+            </button>
+          </div>
         </div>
       </div>
 
@@ -249,8 +275,10 @@ export function ProjectDetailPage() {
       {activeTab === 'risks' && (
         <RisksTab
           project={project}
+          projectId={id!}
           riskAssessment={riskAssessment}
           budgetForecast={budgetForecast}
+          anomalies={projectAnomalies}
           aiPowered={riskData?.aiPowered}
         />
       )}
@@ -404,12 +432,23 @@ function ScheduleTab({ projectId, navigate }: { projectId: string; navigate: (pa
   );
 }
 
-function RisksTab({ project: _project, riskAssessment, budgetForecast, aiPowered }: {
+function RisksTab({ project: _project, projectId, riskAssessment, budgetForecast, anomalies, aiPowered }: {
   project: any;
+  projectId: string;
   riskAssessment?: any;
   budgetForecast?: any;
+  anomalies?: any[];
   aiPowered?: boolean;
 }) {
+  const handleFeedback = (riskType: string, action: 'accepted' | 'rejected') => {
+    apiService.submitAIFeedback({
+      feature: 'risk_assessment',
+      projectId,
+      userAction: action,
+      suggestionData: { riskType },
+    }).catch(() => {}); // fire-and-forget
+  };
+
   const risksByType = (type: string) =>
     riskAssessment?.risks?.filter((r: any) => r.type === type) || [];
 
@@ -491,6 +530,24 @@ function RisksTab({ project: _project, riskAssessment, budgetForecast, aiPowered
                   {risks.length > 1 && (
                     <p className="text-[10px] text-gray-400 mt-1">+{risks.length - 1} more risk{risks.length - 1 !== 1 ? 's' : ''}</p>
                   )}
+                  {aiPowered && (
+                    <div className="mt-2 flex gap-1">
+                      <button
+                        onClick={() => handleFeedback(key, 'accepted')}
+                        className="flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-green-50 hover:text-green-600 transition-colors"
+                        title="This risk assessment is helpful"
+                      >
+                        <ThumbsUp className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => handleFeedback(key, 'rejected')}
+                        className="flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        title="This risk assessment is not accurate"
+                      >
+                        <ThumbsDown className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="mt-1 text-xs text-gray-400">No {label.toLowerCase()} identified</p>
@@ -523,6 +580,37 @@ function RisksTab({ project: _project, riskAssessment, budgetForecast, aiPowered
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Anomalies Panel */}
+      {anomalies && anomalies.length > 0 && (
+        <div className="rounded-xl border border-orange-200 bg-orange-50/30 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <h3 className="text-sm font-semibold text-gray-900">Detected Anomalies</h3>
+            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700">
+              {anomalies.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {anomalies.map((anomaly: any, i: number) => (
+              <div key={i} className="rounded-lg bg-white p-3 border border-orange-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-900">{anomaly.title}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    anomaly.severity === 'critical' ? 'bg-red-100 text-red-700' :
+                    anomaly.severity === 'high' ? 'bg-orange-100 text-orange-700' :
+                    'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {anomaly.severity}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-gray-500">{anomaly.description}</p>
+                <p className="mt-1 text-[10px] text-ai-primary">{anomaly.recommendation}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
