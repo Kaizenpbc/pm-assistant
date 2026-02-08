@@ -9,8 +9,6 @@ import {
   Calendar,
   Users,
   DollarSign,
-  AlertTriangle,
-  CheckCircle,
   Clock
 } from 'lucide-react';
 
@@ -58,10 +56,10 @@ interface ProjectPlanningTemplatesProps {
   onClose: () => void;
 }
 
-const ProjectPlanningTemplates: React.FC<ProjectPlanningTemplatesProps> = ({ 
-  projectCategory,
-  onTemplateSelect, 
-  onClose 
+const ProjectPlanningTemplates: React.FC<ProjectPlanningTemplatesProps> = ({
+  projectCategory: _projectCategory,
+  onTemplateSelect,
+  onClose
 }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
   const [selectedPhases, setSelectedPhases] = useState<string[]>([]);

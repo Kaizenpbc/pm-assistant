@@ -9,16 +9,11 @@ import {
   Server, 
   Cpu, 
   Layers,
-  Clock,
   TrendingUp,
   TrendingDown,
   Minus,
   Bell,
   BellOff,
-  Settings,
-  Download,
-  Upload,
-  Calendar,
   BarChart3
 } from 'lucide-react';
 
@@ -79,7 +74,7 @@ const EnhancedMonitoringDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(30); // seconds
-  const [notifications, setNotifications] = useState(true);
+  const [notifications, _setNotifications] = useState(true);
   const [historicalData, setHistoricalData] = useState<{
     memory: HistoricalMetric[];
     cpu: HistoricalMetric[];

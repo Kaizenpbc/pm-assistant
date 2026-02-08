@@ -238,10 +238,6 @@ class AccessibilityService {
   private handleKeyboardNavigation(e: KeyboardEvent): void {
     // Skip links for keyboard navigation
     if (e.key === 'Tab') {
-      const focusableElements = document.querySelectorAll(
-        'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      
       // Add visual focus indicators
       document.documentElement.classList.add('keyboard-focus');
     }
@@ -252,7 +248,7 @@ class AccessibilityService {
       const openElements = document.querySelectorAll('[aria-expanded="true"]');
       openElements.forEach(element => {
         element.setAttribute('aria-expanded', 'false');
-        element.blur();
+        (element as HTMLElement).blur();
       });
     }
   }

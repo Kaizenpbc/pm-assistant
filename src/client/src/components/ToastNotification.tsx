@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertTriangle, CheckCircle, Info, WifiOff } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
 export interface ToastNotificationProps {
   id: string;
@@ -12,7 +12,7 @@ export interface ToastNotificationProps {
 }
 
 const ToastNotification: React.FC<ToastNotificationProps> = ({
-  id,
+  id: _id,
   type,
   title,
   message,

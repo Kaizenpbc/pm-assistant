@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
-import { LoadingSpinner } from '../components/LoadingSpinner';
 import { AIAssistant } from '../components/AIAssistant';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  DollarSign, 
-  Users, 
-  AlertTriangle, 
+import {
+  ArrowLeft,
+  Calendar,
+  DollarSign,
+  Users,
+  AlertTriangle,
   TrendingUp,
   Brain,
   Target,
@@ -18,17 +17,10 @@ import {
   BarChart3,
   Shield,
   Activity,
-  Settings,
   RefreshCw,
-  Plus,
-  Minus,
   CheckSquare,
   Square,
-  ChevronRight,
-  ChevronDown,
-  Save,
   Loader2,
-  FileText,
   X,
   LogOut
 } from 'lucide-react';
@@ -876,7 +868,7 @@ export const ProjectPage: React.FC = () => {
                   <div className="card-content">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h3>
                     <div className="space-y-3">
-                      {healthData.health.recommendations.map((recommendation, index) => (
+                      {healthData.health.recommendations.map((recommendation: string, index: number) => (
                         <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                           <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                           <p className="text-sm text-gray-700">{recommendation}</p>

@@ -34,7 +34,7 @@ class SecurityService {
    * Generate CSP header content for the current environment
    */
   public generateCSP(): string {
-    const { isDevelopment, baseUrl, apiUrl, wsUrl } = this.config;
+    const { isDevelopment, apiUrl, wsUrl } = this.config;
 
     const directives = [
       `default-src 'self'`,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, DollarSign, Users, MapPin, Building, Wrench, Shield, GraduationCap, Heart, Zap } from 'lucide-react';
+import { X, Calendar, DollarSign, MapPin, Building, Wrench, Shield, GraduationCap, Heart, Zap } from 'lucide-react';
 
 interface ProjectCreationModalProps {
   isOpen: boolean;

@@ -6,13 +6,6 @@ interface PWAInstallPromptProps {
   onDismiss?: () => void;
 }
 
-interface InstallPromptState {
-  isVisible: boolean;
-  canInstall: boolean;
-  isInstalled: boolean;
-  isSupported: boolean;
-}
-
 const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   onInstall,
   onDismiss
@@ -22,7 +15,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   const [hasUpdate, setHasUpdate] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [, setDismissed] = useState(false);
 
   useEffect(() => {
     const checkInstallStatus = async () => {

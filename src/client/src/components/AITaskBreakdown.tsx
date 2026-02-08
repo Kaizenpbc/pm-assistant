@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { apiService } from '../services/api';
 
 interface TaskSuggestion {
@@ -42,7 +42,7 @@ interface AITaskBreakdownProps {
 
 export const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({
   onTasksGenerated,
-  projectId,
+  projectId: _projectId,
   existingDescription = '',
   projectName = '',
   projectCode = '',
@@ -85,7 +85,7 @@ export const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({
   const [analysis, setAnalysis] = useState<ProjectAnalysis | null>(null);
   const [insights, setInsights] = useState<any>(null);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [_showAdvanced, _setShowAdvanced] = useState(false);
 
   const projectTypes = [
     { value: 'construction_project', label: '🏗️ Construction Project' },
@@ -273,25 +273,25 @@ export const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-800 mb-3">👥 Resource Requirements</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {analysis.resourceRequirements.developers > 0 && (
+                {(analysis.resourceRequirements.developers ?? 0) > 0 && (
                   <div className="text-center">
                     <div className="text-xl font-bold text-blue-600">{analysis.resourceRequirements.developers}</div>
                     <div className="text-sm text-gray-600">Developers</div>
                   </div>
                 )}
-                {analysis.resourceRequirements.designers > 0 && (
+                {(analysis.resourceRequirements.designers ?? 0) > 0 && (
                   <div className="text-center">
                     <div className="text-xl font-bold text-purple-600">{analysis.resourceRequirements.designers}</div>
                     <div className="text-sm text-gray-600">Designers</div>
                   </div>
                 )}
-                {analysis.resourceRequirements.testers > 0 && (
+                {(analysis.resourceRequirements.testers ?? 0) > 0 && (
                   <div className="text-center">
                     <div className="text-xl font-bold text-green-600">{analysis.resourceRequirements.testers}</div>
                     <div className="text-sm text-gray-600">Testers</div>
                   </div>
                 )}
-                {analysis.resourceRequirements.managers > 0 && (
+                {(analysis.resourceRequirements.managers ?? 0) > 0 && (
                   <div className="text-center">
                     <div className="text-xl font-bold text-orange-600">{analysis.resourceRequirements.managers}</div>
                     <div className="text-sm text-gray-600">Managers</div>

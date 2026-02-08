@@ -62,7 +62,7 @@ export const ShareTargetHandler: React.FC<ShareTargetHandlerProps> = ({
           navigate('/dashboard?shared=true');
         }, 2000);
       } else {
-        toastService.warning('No content was shared');
+        toastService.warning('No Content', 'No content was shared');
         navigate('/dashboard');
       }
     } catch (error) {

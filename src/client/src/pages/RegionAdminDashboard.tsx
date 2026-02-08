@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
-import { 
-  Settings, 
-  FileText, 
-  Bell, 
-  Building2, 
+import {
+  Settings,
+  Bell,
+  Building2,
   Eye,
   Edit,
   Plus,
@@ -34,7 +33,7 @@ interface ContentSection {
 export const RegionAdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [, setSelectedSection] = useState<string | null>(null);
 
   const regionId = user?.region_id || localStorage.getItem('selectedRegionId');
 

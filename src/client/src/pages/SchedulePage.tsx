@@ -16,8 +16,8 @@ import {
   Trash2,
   Layout,
   List,
-  Indent,
-  Outdent
+
+
 } from 'lucide-react';
 import { Gantt, Task as GanttTask, ViewMode } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
@@ -2337,7 +2337,7 @@ const SchedulePage: React.FC = () => {
                                 </tr>
 
                                 {/* Subtasks */}
-                                {isExpanded && subtasks.map((subtask, subtaskIndex) => (
+                                {isExpanded && subtasks.map((subtask, _subtaskIndex) => (
                                   <tr key={subtask.id} className="bg-gray-50 hover:bg-gray-100">
                                     <td className="border border-gray-300 px-3 py-2 pl-8">
                                       <span

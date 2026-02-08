@@ -28,11 +28,11 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
     }
   };
 
-  const getDimensions = () => {
-    const styles: React.CSSProperties = {};
+  const getDimensions = (): React.CSSProperties => {
+    const styles: Record<string, string> = {};
     if (width) styles.width = typeof width === 'number' ? `${width}px` : width;
     if (height) styles.height = typeof height === 'number' ? `${height}px` : height;
-    return styles;
+    return styles as React.CSSProperties;
   };
 
   return (

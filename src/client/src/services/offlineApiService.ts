@@ -35,13 +35,13 @@ class OfflineApiService {
       } catch (error) {
         // If API call fails, queue for retry
         console.log(`📝 API call failed, queuing for retry: ${actionType}`);
-        await backgroundSyncService.queueOfflineAction(actionType, actionData);
+        await backgroundSyncService.queueOfflineAction(actionType as any, actionData);
         throw error;
       }
     } else {
       // Queue for offline sync
       console.log(`📝 Queuing offline action: ${actionType}`);
-      await backgroundSyncService.queueOfflineAction(actionType, actionData);
+      await backgroundSyncService.queueOfflineAction(actionType as any, actionData);
       
       // Return a mock response or throw an error indicating offline mode
       throw new Error('Operation queued for offline sync');

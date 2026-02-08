@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
@@ -7,8 +7,8 @@ import {
   MapPin, 
   Bell, 
   Calendar, 
-  DollarSign, 
-  TrendingUp,
+
+
   AlertCircle,
   CheckCircle,
   Clock,

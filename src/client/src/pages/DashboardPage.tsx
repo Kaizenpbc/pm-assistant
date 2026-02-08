@@ -4,13 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ProjectCard } from '../components/ProjectCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { AIAssistant } from '../components/AIAssistant';
 import ProjectCreationModal from '../components/ProjectCreationModal';
 import ProjectEditModal from '../components/ProjectEditModal';
-import { 
-  ExternalLink,
+import {
   BarChart3,
   Brain,
   Target,
@@ -23,7 +21,6 @@ import {
   User,
   Lightbulb,
   Loader2,
-  Plus,
   Activity
 } from 'lucide-react';
 
@@ -40,7 +37,7 @@ export const DashboardPage: React.FC = () => {
   
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showEditProject, setShowEditProject] = useState(false);
-  const [editingProject, setEditingProject] = useState(null);
+  const [editingProject, setEditingProject] = useState<any>(null);
   
   // Debug initial state
   console.log('🏠 DashboardPage: Component rendered');
@@ -115,7 +112,7 @@ export const DashboardPage: React.FC = () => {
   const handleUpdateProject = async (updatedProjectData: any) => {
     try {
       console.log('🔄 Updating project:', editingProject?.id, updatedProjectData);
-      await apiService.updateProject(editingProject?.id, updatedProjectData);
+      await apiService.updateProject(editingProject?.id as string, updatedProjectData);
       setShowEditProject(false);
       setEditingProject(null);
       
@@ -797,7 +794,7 @@ export const DashboardPage: React.FC = () => {
                 }
               } catch (error) {
                 console.error('💥 DashboardPage: Error creating project:', error);
-                alert('Error creating project: ' + error.message);
+                alert('Error creating project: ' + (error instanceof Error ? error.message : String(error)));
               } finally {
                 console.log('🔚 DashboardPage: Closing modal after project creation');
                 setShowCreateProject(false);

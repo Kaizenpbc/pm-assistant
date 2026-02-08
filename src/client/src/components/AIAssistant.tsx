@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 interface AIAssistantProps {
   onClose: () => void;
   type: 'analysis' | 'recommendations' | 'chat';
-  projectId?: number;
+  projectId?: number | string;
   projectName?: string;
 }
 
@@ -14,7 +14,7 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-export const AIAssistant: React.FC<AIAssistantProps> = ({ onClose, type, projectId, projectName }) => {
+export const AIAssistant: React.FC<AIAssistantProps> = ({ onClose, type, projectId: _projectId, projectName }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string>('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -521,7 +521,7 @@ Hello! I'm your AI Project Management Assistant. I can help you analyze this pro
                 <p className="text-gray-500 mb-6">
                   {type === 'analysis' && "Click below to analyze your project performance"}
                   {type === 'recommendations' && "Click below to get smart recommendations"}
-                  {type === 'chat' && "Click below to start chatting with your AI assistant"}
+                  {(type as string) === 'chat' && "Click below to start chatting with your AI assistant"}
                 </p>
                 <button
                   onClick={handleAIRequest}
@@ -529,7 +529,7 @@ Hello! I'm your AI Project Management Assistant. I can help you analyze this pro
                 >
                   {type === 'analysis' && "Analyze Projects"}
                   {type === 'recommendations' && "Get Recommendations"}
-                  {type === 'chat' && "Start Chat"}
+                  {(type as string) === 'chat' && "Start Chat"}
                 </button>
               </div>
             )}

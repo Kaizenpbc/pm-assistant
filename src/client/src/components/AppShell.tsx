@@ -13,7 +13,7 @@ interface AppShellState {
 }
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
-  const location = useLocation();
+  useLocation(); // Triggers re-render on route change
   const [shellState, setShellState] = useState<AppShellState>({
     isLoaded: false,
     isOnline: navigator.onLine,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { apiService } from '../services/api';
+// apiService available if needed
 import { MapPin } from 'lucide-react';
 
 interface Region {
